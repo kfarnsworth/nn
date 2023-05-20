@@ -1,0 +1,20 @@
+{
+    "layers": [
+        {
+            "nodes": 16,
+            "bias": -1 
+        },
+        {
+            "nodes": 8,
+            "bias": -1 
+        },
+        {
+            "nodes": 8,
+            "bias": -1 
+        },
+        {
+            "nodes": 4,
+            "bias": -1 
+        }
+    ]
+}
