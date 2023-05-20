@@ -1,11 +1,12 @@
-CPP=g++
-CPPFLAGS=-I./ -std=c++11 -g
-
 EXE = nn
-SRCDIR=src
+SRCDIR=./src
+INCDIR=./src
+
+CPP=g++
+CPPFLAGS=-I$(INCDIR) -std=c++11 -g
 
 SRCS = $(SRCDIR)/main.cpp $(SRCDIR)/Network.cpp $(SRCDIR)/NetworkLayer.cpp $(SRCDIR)/NetworkNode.cpp
-INCS = $(SRCDIR)/Network.h $(SRCDIR)/NetworkLayer.h $(SRCDIR)/NetworkNode.h $(SRCDIR)/json.hpp
+INCS = $(INCDIR)/Network.h $(INCDIR)/NetworkLayer.h $(INCDIR)/NetworkNode.h $(INCDIR)/json.hpp
 
 default: $(EXE)
 
