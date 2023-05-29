@@ -20,7 +20,7 @@ public:
             return m_layers.front().NumNodes();
         return 0;
     };
-    size_t NumOuputs()
+    size_t NumOutputs()
     {
         if (LayerCount()>0) 
             return m_layers.back().NumNodes();

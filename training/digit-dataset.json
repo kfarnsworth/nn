@@ -1,0 +1,17 @@
+{
+    "inputs": 784,
+    "outputs": 10,
+    "input_params": {
+        "type": "image",
+        "width": 28,
+        "height": 28
+    },
+    "output_params": {
+        "set" : ["0", "1", "2" ,"3", "4", "5", "6", "7", "8", "9"]
+    },
+    "data": [ 
+        {"input": "digit-images/image-1.jpg" , "output": "0" },
+        {"input": "digit-images/image-2.jpg" , "output": "4" },
+        {"input": "digit-images/image-3.jpg" , "output": "1" }
+    ]
+}

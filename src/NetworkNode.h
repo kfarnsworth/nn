@@ -13,6 +13,7 @@ public:
     void SetWeights(const std::vector<double> &weights);
     void GetWeights(std::vector<double> &weights);
     double GetOutput() { return m_value; };
+    double NodeCost(double expectedOutput);
 
 private:
     double m_value;

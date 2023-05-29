@@ -2,8 +2,10 @@
 #include <fstream>
 #include "Network.h"
 #include "json.hpp"
+#include "TrainingData.h"
 
 static Network network;
+static TrainingData trainingData;
 
 static void create_network(std::ifstream &fs)
 {
@@ -71,12 +73,17 @@ static void load_network(std::ifstream &fs)
     }
 }
 
-static void show_outputs(std::vector<double> &outputs)
+static void show_outputs(std::vector<double> &outputs, std::vector<double> &expOutputs)
 {
-    std::cout << "Got outputs: " << outputs.size() << std::endl;
-    for (double v : outputs)
+    std::cout << "Output: " << outputs.size() << std::endl;
+    for (size_t i=0; i<outputs.size(); i++)
     {
-        std::cout << " " << v;
+        std::cout <<  std::setw(8) << std::setprecision(4) << std::fixed << outputs[i];
+    }
+    std::cout << " | Expected: ";
+    for (size_t i=0; i<expOutputs.size(); i++)
+    {
+        std::cout <<  std::setw(8) << std::setprecision(4) << std::fixed << expOutputs[i];
     }
     std::cout << std::endl;
 }
@@ -104,28 +111,44 @@ int main(int argc, const char *argv[])
         exit(3);
     }
 
-    std::vector<double> inputs(network.NumInputs(),0);
-
     char c;
     do
     {
         std::cout << std::endl;
-        std::cout << "1. Evaluate Now" << std::endl;
-        std::cout << "2. Change Input" << std::endl;
+        std::cout << "e. Evaluate Data Set" << std::endl;
         std::cout << "s. Save Network" << std::endl;
         std::cout << "l. Load Network" << std::endl;
+        std::cout << "t. Load Training Set" << std::endl;
         std::cout << "q. Quit" << std::endl;
         std::cout << "> ";
-        c = getchar();
-        if (c == '1')
+        while ((c = getchar()) == '\n' || c == EOF);
+        if (c == 'e' || c == 'E')
         {
-            network.Measure(inputs);
-            std::vector<double> &outputs = network.GetOutputs();
-            show_outputs(outputs);
-        }
-        else if (c == '2')
-        {
-            inputs[0] += 0.3;
+            if (trainingData.GetInputCount() == 0 || trainingData.GetInputCount() != network.NumInputs())
+            {
+                std::cout << "Input training data set does not match network inputs" << std::endl;
+            }
+            else if (trainingData.GetOutputCount() == 0 || trainingData.GetOutputCount() != network.NumOutputs())
+            {
+                std::cout << "Output training data set does not match network outputs" << std::endl;
+            }
+            else
+            {
+                DataSet dataSet;
+                if (!trainingData.GetNextDataSet(dataSet))
+                {
+                    if (!trainingData.GetFirstDataSet(dataSet))
+                        std::cout << "Training data set empty!" << std::endl;
+                    else
+                        std::cout << "Reset to first data set" << std::endl;
+                }
+                if (dataSet.input.size() > 0)
+                {
+                    network.Measure(dataSet.input);
+                    std::vector<double> &outputs = network.GetOutputs();
+                    show_outputs(outputs, dataSet.output);
+                }
+            }
         }
         else if (c == 's' || c == 'S')
         {
@@ -175,7 +198,30 @@ int main(int argc, const char *argv[])
                 }
             }
         }
-    } while (c != 'q' && c != 'Q');
+        else if (c == 't' || c == 'T')
+        {
+            std::string trainingFileName;
+            std::cout << "Enter training data set filename> ";
+            std::cin >> trainingFileName;
+            if (trainingFileName.size() > 0)
+            {
+                if (trainingFileName.size() < 6 || 
+                    trainingFileName.substr(trainingFileName.size()-5).compare(".json") != 0)
+                {
+                    trainingFileName += ".json";
+                }
+                trainingData.LoadData(trainingFileName);
+                if (trainingData.GetInputCount() != network.NumInputs() ||
+                    trainingData.GetOutputCount() != network.NumOutputs())
+                {
+                    std::cout << "NOTE: Training data set does not match network: "
+                              << "network(in:" << network.NumInputs() << ",out:" << network.NumOutputs()
+                              << ") dataset(in:" << trainingData.GetInputCount() << ",out:"
+                              << trainingData.GetOutputCount() << ")" << std::endl;
+                }
+            }
+        }
+   } while (c != 'q' && c != 'Q');
 
     return 0;
 }

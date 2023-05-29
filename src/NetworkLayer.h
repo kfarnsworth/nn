@@ -9,6 +9,7 @@ public:
     ~NetworkLayer();
 
     std::vector<double> &GetOutputs();
+    double Cost(const std::vector<double> expectedOutputs);
     const std::vector<NetworkNode> &GetNodes();
     void SetNodeWeights(size_t nodeIx, const std::vector<double> &weights);
     void GetNodeWeights(size_t nodeIx, std::vector<double> &weights);

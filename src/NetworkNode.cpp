@@ -54,3 +54,9 @@ void NetworkNode::GetWeights(std::vector<double> &weights)
 {
     weights = m_weights;
 }
+
+double NetworkNode::NodeCost(double expectedOutput)
+{
+    double error = GetOutput() - expectedOutput;
+    return error*error;
+}

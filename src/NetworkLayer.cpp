@@ -1,3 +1,4 @@
+#include <iostream>
 #include <random>
 #include "NetworkLayer.h"
 
@@ -69,6 +70,21 @@ std::vector<double> &NetworkLayer::GetOutputs()
 const std::vector<NetworkNode> &NetworkLayer::GetNodes()
 {
     return m_nodes;
+}
+
+double NetworkLayer::Cost(const std::vector<double> expectedOutputs)
+{
+    if (expectedOutputs.size() != m_nodes.size())
+    {
+        std::cout << "Can't do cost because expectedOutputs is not the same as nodes." << std::endl;
+        return 0.0;
+    }
+    double cost = 0.0;
+    for(size_t i=0; i<m_nodes.size(); i++)
+    {
+        cost += m_nodes[i].NodeCost(expectedOutputs[i]);
+    }
+    return cost;
 }
 
 void NetworkLayer::CreateWeights(size_t numNodes, std::vector<double> &weights)
