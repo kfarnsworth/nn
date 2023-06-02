@@ -1,0 +1,13 @@
+{
+    "inputs": 784,
+    "outputs": 10,
+    "input_params": {
+        "type": "binary",
+        "file": "mnist-training-data.bin"
+    },
+    "output_params": {
+        "set" : ["0", "1", "2" ,"3", "4", "5", "6", "7", "8", "9"]
+    },
+    "data": [
+    ]
+}

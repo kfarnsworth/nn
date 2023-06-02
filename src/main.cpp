@@ -210,7 +210,7 @@ int main(int argc, const char *argv[])
                 {
                     trainingFileName += ".json";
                 }
-                trainingData.LoadData(trainingFileName);
+                trainingData.OpenData(trainingFileName);
                 if (trainingData.GetInputCount() != network.NumInputs() ||
                     trainingData.GetOutputCount() != network.NumOutputs())
                 {
