@@ -147,7 +147,7 @@ bool TrainingData::ParseDataInput(std::string inputStr, std::vector<double> &inp
             std::cerr << "Unable to read image file: '" << inputStr << "'" << std::endl;
             return false;
         }
-        if ((x * y) != inputCount)
+        if ((x * y) != (int)inputCount)
         {
             std::cerr << "Input data set entry not correct size: '" << inputStr << "'" << std::endl;
             return false;

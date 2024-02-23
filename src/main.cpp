@@ -1,77 +1,11 @@
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include "Network.h"
-#include "json.hpp"
 #include "TrainingData.h"
 
 static Network network;
 static TrainingData trainingData;
-
-static void create_network(std::ifstream &fs)
-{
-    nlohmann::json data = nlohmann::json::parse(fs);
-    auto layers = data["layers"];
-    for (size_t i=0; i<layers.size(); i++)
-    {
-        int numNodes = layers[i]["nodes"];
-        int bias = layers[i]["bias"];
-        network.Add(numNodes, bias);
-    }
-}
-
-static void save_network(std::ofstream &fs)
-{
-    nlohmann::json data;
-    nlohmann::json layers;
-    for (size_t layerIx=0; layerIx<network.LayerCount(); layerIx++)
-    {
-        nlohmann::json layer;
-        size_t nodeCount = network.GetNodeCount(layerIx);
-        nlohmann::json nodes;
-        for (size_t nodeIx=0; nodeIx<nodeCount; nodeIx++)
-        {
-            std::vector<double> weights;
-            double bias;
-            network.GetNodeWeights(layerIx, nodeIx, weights);
-            network.GetNodeBias(layerIx, nodeIx, bias);
-            nlohmann::json w_array(weights);
-            nlohmann::json node;
-            node["bias"] = bias;
-            node["weights"] = weights;
-            nodes.push_back(node);
-        }
-        layer["count"] = nodeCount;
-        layer["nodes"] = nodes;
-        layers.push_back(layer);
-    }
-    data["layers"] = layers;
-    fs << std::setw(4) << data << std::endl;
-}
-
-static void load_network(std::ifstream &fs)
-{
-    network.Clear();
-    nlohmann::json data = nlohmann::json::parse(fs);
-    auto layers = data["layers"];
-    for (size_t i=0; i<layers.size(); i++)
-    {
-        auto layer = layers[i];
-        size_t nodeCount = layer["count"];
-        auto nodes = layer["nodes"];
-        network.Add(nodeCount);
-        for (size_t n=0; n<nodes.size(); n++)
-        {
-            auto node = nodes[n];
-            double bias = node["bias"];
-            std::vector<double> weights = node["weights"];
-            for (size_t j=0; j<nodeCount; j++)
-            {
-                network.SetNodeBias(i, j, bias);
-                network.SetNodeWeights(i, j, weights);
-            }
-        }
-    }
-}
 
 static void show_outputs(std::vector<double> &outputs, std::vector<double> &expOutputs)
 {
@@ -80,7 +14,7 @@ static void show_outputs(std::vector<double> &outputs, std::vector<double> &expO
     {
         std::cout <<  std::setw(8) << std::setprecision(4) << std::fixed << outputs[i];
     }
-    std::cout << " | Expected: ";
+        std::cout << " | Expected: ";
     for (size_t i=0; i<expOutputs.size(); i++)
     {
         std::cout <<  std::setw(8) << std::setprecision(4) << std::fixed << expOutputs[i];
@@ -102,7 +36,7 @@ int main(int argc, const char *argv[])
         std::cerr << "Can't open config file " << argv[1] << std::endl;
         exit(2);
     }
-    create_network(fs);
+    network.CreateNetwork(fs);
     fs.close();
 
     if (network.LayerCount() == 0)
@@ -132,7 +66,7 @@ int main(int argc, const char *argv[])
             {
                 std::cout << "Output training data set does not match network outputs" << std::endl;
             }
-            else
+        else
             {
                 DataSet dataSet;
                 if (!trainingData.GetNextDataSet(dataSet))
@@ -165,7 +99,7 @@ int main(int argc, const char *argv[])
                 std::ofstream fs(saveFileName, std::ofstream::out);
                 if (fs.is_open())
                 {
-                    save_network(fs);
+                    network.SaveNetwork(fs);
                     fs.close();
                 }
                 else
@@ -189,7 +123,7 @@ int main(int argc, const char *argv[])
                 std::ifstream fs(loadFileName, std::ifstream::in);
                 if (fs.is_open())
                 {
-                    load_network(fs);
+                    network.LoadNetwork(fs);
                     fs.close();
                 }
                 else
@@ -198,7 +132,7 @@ int main(int argc, const char *argv[])
                 }
             }
         }
-        else if (c == 't' || c == 'T')
+else if (c == 't' || c == 'T')
         {
             std::string trainingFileName;
             std::cout << "Enter training data set filename> ";
@@ -221,7 +155,7 @@ int main(int argc, const char *argv[])
                 }
             }
         }
-   } while (c != 'q' && c != 'Q');
+    } while (c != 'q' && c != 'Q');
 
     return 0;
 }

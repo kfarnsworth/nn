@@ -2,7 +2,7 @@
 #include <random>
 #include "NetworkLayer.h"
 
-NetworkLayer::NetworkLayer(int numNodes, double bias)
+NetworkLayer::NetworkLayer(size_t numNodes, double bias)
 {
     std::vector<double> weights;
     CreateWeights(numNodes, weights);

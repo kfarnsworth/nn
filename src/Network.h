@@ -1,9 +1,13 @@
+#include <fstream>
 #include "NetworkLayer.h"
 
 class Network {
 public:
     Network();
     virtual ~Network();
+    void CreateNetwork(std::ifstream &fs);
+    void SaveNetwork(std::ofstream &fs);
+    void LoadNetwork(std::ifstream &fs);
     void Add(int numNodes, double bias=-1.0);
     void Clear();
     void SetNodeWeights(size_t layerIx, size_t nodeIx, const std::vector<double> &weights);

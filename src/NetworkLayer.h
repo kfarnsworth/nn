@@ -5,7 +5,7 @@
 class NetworkLayer {
 
 public:
-    NetworkLayer(int numNodes, double bias);
+    NetworkLayer(size_t numNodes, double bias);
     ~NetworkLayer();
 
     std::vector<double> &GetOutputs();
