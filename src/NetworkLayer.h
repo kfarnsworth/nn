@@ -1,3 +1,4 @@
+#pragma once
 
 #include <vector>
 #include "NetworkNode.h"
@@ -5,24 +6,28 @@
 class NetworkLayer {
 
 public:
-    NetworkLayer(size_t numNodes, double bias);
+    NetworkLayer(size_t numNodes, size_t numInputs, double bias);
     ~NetworkLayer();
 
     std::vector<double> &GetOutputs();
+    std::vector<double> &GetOutputDerivatives();
     double Cost(const std::vector<double> expectedOutputs);
     const std::vector<NetworkNode> &GetNodes();
-    void SetNodeWeights(size_t nodeIx, const std::vector<double> &weights);
-    void GetNodeWeights(size_t nodeIx, std::vector<double> &weights);
-    void SetNodeBias(size_t nodeIx, const double bias);
-    void GetNodeBias(size_t nodeIx, double &bias);
+    void SetNodeWeights(int nodeIx, const std::vector<double> &weights);
+    void GetNodeWeights(int nodeIx, std::vector<double> &weights);
+    void SetNodeBias(int nodeIx, const double bias);
+    void GetNodeBias(int nodeIx, double &bias);
     void Measure(const std::vector<double> &outputs);
     void Measure(std::vector<NetworkNode> &inputNodes);
-    size_t NumNodes() { return m_nodes.size(); };
+    int NumNodes() { return m_nodes.size(); };
+    int NumInputs() { return m_numInputs; };
 
     std::vector<double> m_outputs;
+    std::vector<double> m_outputDerivatives;
 
 private:
     std::vector<NetworkNode> m_nodes;
+    size_t m_numInputs;
 
-    void CreateWeights(size_t numNodes, std::vector<double> &weights);
+    void CreateWeights(size_t numInputs, std::vector<double> &weights);
 };

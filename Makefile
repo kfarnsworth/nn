@@ -14,6 +14,7 @@ SRCS = $(SRCDIR)/main.cpp \
 	   $(SRCDIR)/NetworkLayer.cpp \
 	   $(SRCDIR)/NetworkNode.cpp \
 	   $(SRCDIR)/TrainingData.cpp \
+	   $(SRCDIR)/StochasticGradientDecent.cpp \
 
 CPPFLAGS+=-I./ -I/usr/include/
 

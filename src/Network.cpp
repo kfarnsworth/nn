@@ -1,7 +1,7 @@
 #include "Network.h"
 #include "json.hpp"
 
-Network::Network()
+Network::Network() : m_numInputs(0)
 {
 }
 
@@ -13,12 +13,15 @@ Network::~Network()
 void Network::CreateNetwork(std::ifstream &fs)
 {
     nlohmann::json data = nlohmann::json::parse(fs);
+    m_numInputs = data["inputs"];
+    int inputs = m_numInputs;
     auto layers = data["layers"];
     for (size_t i=0; i<layers.size(); i++)
     {
         int numNodes = layers[i]["nodes"];
         int bias = layers[i]["bias"];
-        Add(numNodes, bias);
+        Add(numNodes, inputs, bias);
+        inputs = numNodes;
     }
 }
 
@@ -26,12 +29,13 @@ void Network::SaveNetwork(std::ofstream &fs)
 {
     nlohmann::json data;
     nlohmann::json layers;
-    for (size_t layerIx=0; layerIx<LayerCount(); layerIx++)
+    data["inputs"] = m_numInputs;
+    for (int layerIx=0; layerIx<LayerCount(); layerIx++)
     {
         nlohmann::json layer;
-        size_t nodeCount = GetNodeCount(layerIx);
+        int nodeCount = GetNodeCount(layerIx);
         nlohmann::json nodes;
-        for (size_t nodeIx=0; nodeIx<nodeCount; nodeIx++)
+        for (int nodeIx=0; nodeIx<nodeCount; nodeIx++)
         {
             std::vector<double> weights;
             double bias;
@@ -55,13 +59,15 @@ void Network::LoadNetwork(std::ifstream &fs)
 {
     Clear();
     nlohmann::json data = nlohmann::json::parse(fs);
+    m_numInputs = data["inputs"];
+    int inputs = m_numInputs;
     auto layers = data["layers"];
     for (size_t i=0; i<layers.size(); i++)
     {
         auto layer = layers[i];
         size_t nodeCount = layer["count"];
         auto nodes = layer["nodes"];
-        Add(nodeCount);
+        Add(nodeCount, inputs);
         for (size_t n=0; n<nodes.size(); n++)
         {
             auto node = nodes[n];
@@ -73,12 +79,13 @@ void Network::LoadNetwork(std::ifstream &fs)
                 SetNodeWeights(i, j, weights);
             }
         }
+        inputs = nodeCount;
     }
 }
 
-void Network::Add(int numNodes, double bias)
+void Network::Add(int numNodes, int numInputs, double bias)
 {
-    m_layers.emplace_back(numNodes, bias);
+    m_layers.emplace_back(numNodes, numInputs, bias);
 }
 
 void Network::Clear()
@@ -86,48 +93,61 @@ void Network::Clear()
     m_layers.clear();
 }
 
-void Network::SetNodeWeights(size_t layerIx, size_t nodeIx, const std::vector<double> &weights)
+void Network::SetNodeWeights(int layerIx, int nodeIx, const std::vector<double> &weights)
 {
-    if (layerIx >= LayerCount())
-        return;
+    if (layerIx >= LayerCount()) throw std::runtime_error("layer index out of range");
     m_layers[layerIx].SetNodeWeights(nodeIx, weights);
 }
 
-void Network::GetNodeWeights(size_t layerIx, size_t nodeIx, std::vector<double> &weights)
+void Network::GetNodeWeights(int layerIx, int nodeIx, std::vector<double> &weights)
 {
-    if (layerIx >= LayerCount())
-        return;
+    if (layerIx >= LayerCount()) throw std::runtime_error("layer index out of range");
     m_layers[layerIx].GetNodeWeights(nodeIx, weights);
 }
 
-void Network::SetNodeBias(size_t layerIx, size_t nodeIx, const double bias)
+void Network::SetNodeBias(int layerIx, int nodeIx, const double bias)
 {
-    if (layerIx >= LayerCount())
-        return;
+    if (layerIx >= LayerCount()) throw std::runtime_error("layer index out of range");
     m_layers[layerIx].SetNodeBias(nodeIx, bias);
 }
 
-void Network::GetNodeBias(size_t layerIx, size_t nodeIx, double &bias)
+void Network::GetNodeBias(int layerIx, int nodeIx, double &bias)
 {
-    if (layerIx >= LayerCount())
-        return;
+    if (layerIx >= LayerCount()) throw std::runtime_error("layer index out of range");
     m_layers[layerIx].GetNodeBias(nodeIx, bias);
 }
 
-size_t Network::GetNodeCount(size_t layerIx)
+int Network::GetNodeCount(int layerIx)
 {
-    if (layerIx >= LayerCount())
-        return 0;
+    if (layerIx >= LayerCount()) throw std::runtime_error("layer index out of range");
     return m_layers[layerIx].NumNodes();
 };
 
-void Network::Measure(std::vector<double> &inputs)
+size_t Network::NumInputs(int layerIx)
 {
-    std::vector<double> &lastInputs = inputs;
-    for (NetworkLayer &layer : m_layers)
+    if (layerIx >= LayerCount()) throw std::runtime_error("layer index out of range");
+    return m_layers[layerIx].NumInputs();
+}
+
+std::vector<double> &Network::GetOutputs(int layerIx)
+{
+    if (layerIx >= LayerCount()) throw std::runtime_error("layer index out of range");
+    return m_layers[layerIx].GetOutputs();
+}
+
+std::vector<double> &Network::GetOutputDerivatives(int layerIx)
+{
+    if (layerIx >= LayerCount()) throw std::runtime_error("layer index out of range");
+    return m_layers[layerIx].GetOutputDerivatives();
+}
+
+void Network::Measure(const std::vector<double> &inputs)
+{
+    std::vector<double> lastInputs = inputs;
+    for (size_t i = 0; i<m_layers.size(); i++)
     {
-        layer.Measure(lastInputs);
-        lastInputs = layer.GetOutputs();
+        m_layers[i].Measure(lastInputs);
+        lastInputs = m_layers[i].GetOutputs();
     }
 }
 

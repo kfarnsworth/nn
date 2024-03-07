@@ -9,8 +9,23 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/nn",
-            "args": [],
-            "cwd": "${workspaceFolder}"
+            "args": [
+                "configs/nn-digits.json",
+                "-t","training/mnist-training-binary.json",
+                "-b","100",
+                "-n","50",
+                "-r","10"
+            ],
+            "cwd": "${workspaceFolder}",
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build"
         }
     ]
 }

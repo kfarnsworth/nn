@@ -175,6 +175,8 @@ bool TrainingData::ParseDataInput(std::string inputStr, std::vector<double> &inp
             if (v < threshold)
                 v = 0;
             input.push_back((v * 1.0) / 255);
+            if (pos2 == std::string::npos)
+                break;
             pos1 = pos2+1;
         }
         return true;

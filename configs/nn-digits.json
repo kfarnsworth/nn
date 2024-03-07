@@ -1,9 +1,6 @@
 {
+    "inputs": 784,
     "layers": [
-        {
-            "nodes": 784,
-            "bias": 0
-        },
         {
             "nodes": 32,
             "bias": -1 

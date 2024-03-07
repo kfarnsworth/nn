@@ -1,9 +1,6 @@
 {
+    "input": 16,
     "layers": [
-        {
-            "nodes": 16,
-            "bias": -1 
-        },
         {
             "nodes": 8,
             "bias": -1 
