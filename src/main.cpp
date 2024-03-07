@@ -55,9 +55,9 @@ static void show_usage(const char *s)
     std::cerr << "  <neural-network-config> - network configuration (required)" << std::endl;
     std::cerr << "  options:" << std::endl;
     std::cerr << "    -t|--training <training-file> - training file input" << std::endl;
-    std::cerr << "    -b|--batchcount <int> - number of batches to train with" << std::endl;
-    std::cerr << "    -n|--batchsize <int> - size of each batch" << std::endl;
-    std::cerr << "    -r|--learningrate <int> - learning rate between 1 and batchsize" << std::endl;
+    std::cerr << "    -b|--batchcount <int> - number of batches to train with (default=30)" << std::endl;
+    std::cerr << "    -n|--batchsize <int> - size of each batch (default=10)" << std::endl;
+    std::cerr << "    -r|--learningrate <float> - learning rate (default=3.0)" << std::endl;
     std::cerr << "    -h|--help - this output" << std::endl;
 }
 
@@ -70,9 +70,10 @@ int main(int argc, const char *argv[])
     int i = 1;
     std::string trainingFilename;
     std::string configFilename;
-    int trainingBatchSize = 20;
-    int trainingMaxBatches = 0;
-    int learningRate = 1;
+    int trainingBatchSize = 10;
+    int trainingMaxBatches = 30;
+    double learningRate = 3.0;
+    int trainingTestEntry = 0;
 
     while (i < argc)
     {
@@ -136,7 +137,7 @@ int main(int argc, const char *argv[])
                 break;    
             }
             try {
-                learningRate = std::stol(argv[i]);
+                learningRate = std::stod(argv[i]);
             } catch(...) {
                 std::cerr << "ERROR:Invalid learning rate" << std::endl;
                 failout = true;
@@ -187,6 +188,7 @@ int main(int argc, const char *argv[])
         std::cout << std::endl;
         std::cout << "e. Evaluate Data Set" << std::endl;
         std::cout << "a. Train SGD" << std::endl;
+        std::cout << "b. Train Test Single Input" << std::endl;
         std::cout << "s. Save Network" << std::endl;
         std::cout << "l. Load Network" << std::endl;
         std::cout << "t. Load Training Set" << std::endl;
@@ -197,6 +199,23 @@ int main(int argc, const char *argv[])
         {
             StochasticGradientDecent sgd(learningRate);
             sgd.Train(network, trainingData, trainingBatchSize, trainingMaxBatches);
+        }
+        if (c == 'b' || c == 'B')
+        {
+            StochasticGradientDecent sgd(learningRate);
+            DataSet dataSet;
+            if (trainingData.GetDataSet(trainingTestEntry, dataSet))
+            {
+                sgd.TrainTest(network, dataSet, trainingBatchSize, trainingMaxBatches);
+                // show result of training one data set
+                network.Measure(dataSet.input);
+                std::vector<double> &outputs = network.GetOutputs();
+                show_outputs(outputs, dataSet.output);
+            }
+            else
+            {
+                std::cerr << "ERROR: Can't get data set training index " << trainingTestEntry << std::endl;
+            }
         }
         else if (c == 'e' || c == 'E')
         {

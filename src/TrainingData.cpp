@@ -51,6 +51,36 @@ bool TrainingData::GetNextDataSet(DataSet &set)
     return true;
 }
 
+bool TrainingData::GetDataSet(int index, DataSet &set)
+{
+    if (inputType == "binary")
+    {
+        if (index >= (int)dataEntries)
+            return false;
+        char *buf = new char[dataEntrySize];
+        dataFh.seekg (dataEntrySize*index, dataFh.beg);
+        dataFh.read(buf, dataEntrySize);
+        std::vector<unsigned char> inData(buf+1, buf + dataEntrySize);
+        std::vector<double> inputEntry, outputEntry;
+        if (!ParseDataInput(inData, inputEntry) ||
+            !ParseDataOutput(buf[0], outputEntry))
+        {
+            delete[] buf;
+            return false;
+        }
+        set = DataSet(inputEntry, outputEntry);
+        delete[] buf;
+    }
+    else
+    {
+        if (index >= (int)dataSets.size())
+            return false;
+        set = dataSets[index];
+    }
+    setIndex = index+1;
+    return true;
+}
+
 bool TrainingData::OpenData(const std::string filename)
 {
     std::ifstream fs(filename, std::ifstream::in);
@@ -108,22 +138,32 @@ bool TrainingData::OpenData(const std::string filename)
             outputSet.push_back(out);
         }
         auto sets = trainingInfo["data"];
-        for (size_t i=0; i<sets.size(); i++)
+        if (sets.size() > 0)
         {
-            auto data = sets[i];
-            std::vector<double> inputEntry, outputEntry;
-            std::string inputStr = data["input"];
-            std::string outputStr = data["output"];
-            if (ParseDataInput(inputStr, inputEntry) &&
-                ParseDataOutput(outputStr, outputEntry))
+            for (size_t i=0; i<sets.size(); i++)
             {
-                dataSets.emplace_back(inputEntry, outputEntry);
+                auto data = sets[i];
+                std::vector<double> inputEntry, outputEntry;
+                std::string inputStr = data["input"];
+                std::string outputStr = data["output"];
+                if (ParseDataInput(inputStr, inputEntry) &&
+                    ParseDataOutput(outputStr, outputEntry))
+                {
+                    dataSets.emplace_back(inputEntry, outputEntry);
+                }
+                else
+                {
+                    std::cerr << "Failed to parse data!" << std::endl;
+                    return false;
+                }
             }
-            else
-            {
-                return false;
-            }
+            dataEntries = dataSets.size();
         }
+        std::cout << "Training Data Loaded:" << std::endl;
+        std::cout << "       Type: " << inputType << std::endl;
+        std::cout << "    Samples: " << dataEntries << std::endl;
+        std::cout << "     Inputs: " << inputCount << std::endl;
+        std::cout << "    Outputs: " << outputCount << std::endl;
         return true;
     }
     else

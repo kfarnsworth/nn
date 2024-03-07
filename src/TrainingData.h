@@ -8,7 +8,7 @@ public:
     DataSet() {};
     ~DataSet() {};
     
-    DataSet(std::vector<double> &in, std::vector<double> out)
+    DataSet(std::vector<double> &in, std::vector<double> &out)
     { 
         input = in;
         output = out;
@@ -26,6 +26,7 @@ public:
     bool GetNextDataSet(DataSet &set);
     size_t GetInputCount() { return inputCount; };
     size_t GetOutputCount() { return outputCount; };
+    bool GetDataSet(int index, DataSet &set);
 
 private:
     std::string dirPrefix;

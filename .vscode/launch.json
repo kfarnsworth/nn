@@ -12,9 +12,9 @@
             "args": [
                 "configs/nn-digits.json",
                 "-t","training/mnist-training-binary.json",
-                "-b","100",
-                "-n","50",
-                "-r","10"
+                "-b","30",
+                "-n","10",
+                "-r","3.0"
             ],
             "cwd": "${workspaceFolder}",
             "MIMode": "gdb",

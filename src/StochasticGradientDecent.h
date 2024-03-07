@@ -11,6 +11,7 @@ public:
     ~StochasticGradientDecent();
 
     void Train(Network &network, TrainingData &trainingData, int batchSize, int numBatches=0);
+    void TrainTest(Network &network, DataSet &dataSet, int batchSize, int numBatches=0);
 
 private:
     void TrainBatch(Network &network, std::vector<DataSet> &batchDataSet);

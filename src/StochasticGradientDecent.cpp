@@ -12,6 +12,24 @@ StochasticGradientDecent::~StochasticGradientDecent()
 
 }
 
+void StochasticGradientDecent::TrainTest(Network &network, DataSet &dataSet, int batchSize, int numBatches)
+{
+    int batchCount = 0;
+    std::vector<DataSet> dataSets;
+
+    for (int i=0; i<batchSize; i++)
+    {
+        dataSets.push_back(dataSet);    // same data set
+    }
+
+    while (batchCount < numBatches)
+    {
+        TrainBatch(network, dataSets);
+        batchCount++;
+        std::cout << "Batch " << batchCount << " complete." << std::endl;
+    }
+}
+
 void StochasticGradientDecent::Train(Network &network, TrainingData &trainingData, int batchSize, int numBatches)
 {
     int batchCount = 0;

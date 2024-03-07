@@ -24,6 +24,7 @@ double NetworkNode::Measure(const std::vector<double> &inputs)
     }
     m_weightedSum = total + m_bias;
     m_activation = Sigmoid(m_weightedSum);
+    m_activationDerivative = SigmoidPrime(m_activation);
     return m_activation;
 }
 
