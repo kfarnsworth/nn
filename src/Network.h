@@ -33,8 +33,11 @@ public:
             return m_layers.back().NumNodes();
         return 0;
     };
+    void SetTrainingState(bool state) { m_isTraining = state; }
+    bool IsTraining() { return m_isTraining; }
 
 private:
     int m_numInputs;
     std::vector<NetworkLayer>   m_layers;
+    bool m_isTraining;
 };

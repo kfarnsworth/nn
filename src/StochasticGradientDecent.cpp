@@ -1,8 +1,9 @@
 #include <iostream>
+#include <ctime>
 #include "StochasticGradientDecent.h"
 
-StochasticGradientDecent::StochasticGradientDecent(double learningRate)
-    : m_learningRate(learningRate)
+StochasticGradientDecent::StochasticGradientDecent(Network &network, double learningRate)
+    : Training(network), m_learningRate(learningRate)
 {
     
 }
@@ -10,60 +11,6 @@ StochasticGradientDecent::StochasticGradientDecent(double learningRate)
 StochasticGradientDecent::~StochasticGradientDecent()
 {
 
-}
-
-void StochasticGradientDecent::TrainTest(Network &network, DataSet &dataSet, int batchSize, int numBatches)
-{
-    int batchCount = 0;
-    std::vector<DataSet> dataSets;
-
-    for (int i=0; i<batchSize; i++)
-    {
-        dataSets.push_back(dataSet);    // same data set
-    }
-
-    while (batchCount < numBatches)
-    {
-        TrainBatch(network, dataSets);
-        batchCount++;
-        std::cout << "Batch " << batchCount << " complete." << std::endl;
-    }
-}
-
-void StochasticGradientDecent::Train(Network &network, TrainingData &trainingData, int batchSize, int numBatches)
-{
-    int batchCount = 0;
-    int setCount = 0;
-    std::vector<DataSet> dataSets;
-    bool complete = false;
-
-    dataSets.resize(batchSize);
-    if (!trainingData.GetFirstDataSet(dataSets[setCount]))
-    {
-        std::cerr << "ERROR: training data input" << std::endl;
-        return;
-    }
-    setCount++;
-    do
-    {
-        while (setCount < batchSize)
-        {
-            if (!trainingData.GetNextDataSet(dataSets[setCount]))
-            {
-                setCount--;
-                dataSets.resize(setCount);
-                complete = true;
-                break;
-            }
-            setCount++;
-        }
-        TrainBatch(network, dataSets);
-        setCount = 0;
-        batchCount++;
-        if (numBatches != 0 && batchCount >= numBatches)
-            break;
-        std::cout << "Batch " << batchCount << " complete." << std::endl;
-    } while (!complete);
 }
 
 void StochasticGradientDecent::TrainBatch(Network &network, std::vector<DataSet> &batchDataSet)

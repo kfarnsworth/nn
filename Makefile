@@ -4,7 +4,7 @@ LD=g++
 CPPFLAGS =--std=c++11 -g -Wall -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)"
 LDFLAGS=-L/usr/lib/x86_64-linux-gnu
 OUTDIR=bin
-LIBS=-lstb
+LIBS=-lstb -lpthread
 
 EXE = $(OUTDIR)/nn
 SRCDIR=src
@@ -14,6 +14,7 @@ SRCS = $(SRCDIR)/main.cpp \
 	   $(SRCDIR)/NetworkLayer.cpp \
 	   $(SRCDIR)/NetworkNode.cpp \
 	   $(SRCDIR)/TrainingData.cpp \
+	   $(SRCDIR)/Training.cpp \
 	   $(SRCDIR)/StochasticGradientDecent.cpp \
 
 CPPFLAGS+=-I./ -I/usr/include/

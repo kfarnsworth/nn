@@ -2,9 +2,9 @@
 #include <iomanip>
 #include <fstream>
 #include <cstring>
+#include "Training.h"
 #include "Network.h"
 #include "TrainingData.h"
-#include "StochasticGradientDecent.h"
 
 static Network network;
 static TrainingData trainingData;
@@ -24,8 +24,9 @@ static void show_outputs(std::vector<double> &outputs, std::vector<double> &expO
     std::cout << std::endl;
 }
 
-static void load_training(std::string trainingFileName)
+static bool load_training(std::string trainingFileName)
 {
+    trainingData.Clear();
     if (trainingFileName.size() > 0)
     {
         if (trainingFileName.size() < 6 || 
@@ -33,20 +34,31 @@ static void load_training(std::string trainingFileName)
         {
             trainingFileName += ".json";
         }
-        if (trainingData.OpenData(trainingFileName) && 
-            (trainingData.GetInputCount() != network.NumInputs() ||
-             trainingData.GetOutputCount() != network.NumOutputs()))
+        if (trainingData.OpenData(trainingFileName))
         {
-            std::cout << "NOTE: Training data set does not match network: "
-                        << "network(in:" << network.NumInputs() << ",out:" << network.NumOutputs()
-                        << ") dataset(in:" << trainingData.GetInputCount() << ",out:"
-                        << trainingData.GetOutputCount() << ")" << std::endl;
+            if (trainingData.GetInputCount() != network.NumInputs() ||
+                trainingData.GetOutputCount() != network.NumOutputs())
+            {
+                std::cout << "NOTE: Training data set does not match network: "
+                            << "network(in:" << network.NumInputs() << ",out:" << network.NumOutputs()
+                            << ") dataset(in:" << trainingData.GetInputCount() << ",out:"
+                            << trainingData.GetOutputCount() << ")" << std::endl;
+                trainingData.Clear();
+                return false;
+            }
+        }
+        else
+        {
+            std::cout << "NOTE: Unable to load training data from \"" << trainingFileName << "\"" << std::endl;
+            return false;
         }
     }
     else
     {
         std::cout << "NOTE: Invalid training file \"" << trainingFileName << "\"" << std::endl;
+        return false;
     }
+    return true;
 }
 
 static void show_usage(const char *s)
@@ -58,6 +70,8 @@ static void show_usage(const char *s)
     std::cerr << "    -b|--batchcount <int> - number of batches to train with (default=30)" << std::endl;
     std::cerr << "    -n|--batchsize <int> - size of each batch (default=10)" << std::endl;
     std::cerr << "    -r|--learningrate <float> - learning rate (default=3.0)" << std::endl;
+    std::cerr << "    -s|--starttraining - start training" << std::endl;
+    std::cerr << "    --outputindex <int> - training with same output index" << std::endl;
     std::cerr << "    -h|--help - this output" << std::endl;
 }
 
@@ -74,6 +88,8 @@ int main(int argc, const char *argv[])
     int trainingMaxBatches = 30;
     double learningRate = 3.0;
     int trainingTestEntry = 0;
+    bool startTraining = false;
+    int trainingOuputIndex = -1;
 
     while (i < argc)
     {
@@ -144,6 +160,27 @@ int main(int argc, const char *argv[])
                 break;    
             }
         }
+        else if (!std::strcmp(argv[i], "-s") || !std::strcmp(argv[i], "--starttraining"))
+        {
+            startTraining = true;
+        }
+        else if (!std::strcmp(argv[i], "--outputindex"))
+        {
+            i++;
+            if (i >= argc)
+            {
+                std::cerr << "ERROR:Missing output index" << std::endl;
+                failout = true;
+                break;    
+            }
+            try {
+                trainingOuputIndex = std::stod(argv[i]);
+            } catch(...) {
+                std::cerr << "ERROR:Invalid output index" << std::endl;
+                failout = true;
+                break;    
+            }
+        }
         else if (argv[i][0] == '-')
         {
             std::cerr << "ERROR: Unknown option \"" << argv[i] << "\"" << std::endl;
@@ -182,6 +219,13 @@ int main(int argc, const char *argv[])
         load_training(trainingFilename);
     }
 
+    if (startTraining && !trainingData.IsEmpty())
+    {
+        Training::TrainerPtr sgd = Training::GetTrainer(network);
+        sgd->SetLearningRate(learningRate);
+        sgd->Train(trainingData, trainingBatchSize, trainingMaxBatches, trainingOuputIndex);
+    }
+
     char c;
     do
     {
@@ -197,24 +241,23 @@ int main(int argc, const char *argv[])
         while ((c = getchar()) == '\n' || c == EOF);
         if (c == 'a' || c == 'A')
         {
-            StochasticGradientDecent sgd(learningRate);
-            sgd.Train(network, trainingData, trainingBatchSize, trainingMaxBatches);
+            Training::TrainerPtr sgd = Training::GetTrainer(network);
+            sgd->SetLearningRate(learningRate);
+            sgd->Train(trainingData, trainingBatchSize, trainingMaxBatches, trainingOuputIndex);
         }
         if (c == 'b' || c == 'B')
         {
-            StochasticGradientDecent sgd(learningRate);
+            Training::TrainerPtr sgd = Training::GetTrainer(network);
+            sgd->SetLearningRate(learningRate);
+            sgd->TrainTest(trainingData, trainingTestEntry, trainingBatchSize, trainingMaxBatches);
+            sgd->WaitComplete();
+            // show result of training one data set
             DataSet dataSet;
             if (trainingData.GetDataSet(trainingTestEntry, dataSet))
             {
-                sgd.TrainTest(network, dataSet, trainingBatchSize, trainingMaxBatches);
-                // show result of training one data set
                 network.Measure(dataSet.input);
                 std::vector<double> &outputs = network.GetOutputs();
                 show_outputs(outputs, dataSet.output);
-            }
-            else
-            {
-                std::cerr << "ERROR: Can't get data set training index " << trainingTestEntry << std::endl;
             }
         }
         else if (c == 'e' || c == 'E')
@@ -230,9 +273,9 @@ int main(int argc, const char *argv[])
             else
             {
                 DataSet dataSet;
-                if (!trainingData.GetNextDataSet(dataSet))
+                if (!trainingData.GetNextDataSet(dataSet, trainingOuputIndex))
                 {
-                    if (!trainingData.GetFirstDataSet(dataSet))
+                    if (!trainingData.GetFirstDataSet(dataSet, trainingOuputIndex))
                     {
                         std::cout << "Training data set empty!" << std::endl;
                         break;

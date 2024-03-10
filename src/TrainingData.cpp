@@ -15,37 +15,78 @@ TrainingData::~TrainingData()
     dataFh.close();
 }
 
-bool TrainingData::GetFirstDataSet(DataSet &set)
+bool TrainingData::GetFirstDataSet(DataSet &set, int outIx)
 {
     setIndex = 0;
     if (inputType == "binary")
     {
         dataFh.seekg (0, dataFh.beg);
     }
-    return GetNextDataSet(set);
+    return GetNextDataSet(set, outIx);
 }
 
-bool TrainingData::GetNextDataSet(DataSet &set)
+bool TrainingData::GetNextDataSet(DataSet &set, int outIx)
 {
+    if (setIndex >= dataEntries)
+        return false;
+    if (outIx >= 0 && outIx > (int)outputSet.size())
+        return false;
     if (inputType == "binary")
     {
-        if (setIndex >= dataEntries)
-            return false;
         char *buf = new char[dataEntrySize];
-        dataFh.read(buf, dataEntrySize);
+        bool getNext = false;
+        do 
+        {
+            dataFh.read(buf, dataEntrySize);
+            if (outIx >= 0)
+            {
+                std::string byteStr = std::to_string(buf[0]);
+                getNext = (byteStr.compare(outputSet[outIx]) != 0);
+                if (getNext)
+                {
+                    setIndex++;
+                    if (setIndex >= dataEntries)
+                    {
+                        delete[] buf;
+                        return false;
+                    }
+                }
+            }
+        }
+        while (getNext);
         std::vector<unsigned char> inData(buf+1, buf + dataEntrySize);
         std::vector<double> inputEntry, outputEntry;
         if (!ParseDataInput(inData, inputEntry) ||
             !ParseDataOutput(buf[0], outputEntry))
+        {
+            delete[] buf;
             return false;
+        }
         set = DataSet(inputEntry, outputEntry);
         delete[] buf;
     }
     else
     {
-        if (setIndex >= dataSets.size())
-            return false;
-        set = dataSets[setIndex];
+        bool getNext = false;
+        do 
+        {
+            set = dataSets[setIndex];
+            if (outIx >= 0)
+            {
+                std::vector<double> expOut;
+                if (!ParseDataOutput(outputSet[outIx], expOut))
+                    return false;
+                getNext = !std::equal(set.output.begin(), set.output.end(), expOut.begin());
+                if (getNext)
+                {
+                    setIndex++;
+                    if (setIndex >= dataEntries)
+                    {
+                        return false;
+                    }
+                }
+            }
+        } while(getNext);
     }
     setIndex++;
     return true;

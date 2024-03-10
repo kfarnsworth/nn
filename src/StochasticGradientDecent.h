@@ -1,20 +1,22 @@
 #pragma once
 
 #include <vector>
+#include "Training.h"
 #include "Network.h"
 #include "TrainingData.h"
 
-class StochasticGradientDecent
+class StochasticGradientDecent : public Training
 {
 public:
-    StochasticGradientDecent(double learningRate=1.0);
+    StochasticGradientDecent(Network &network, double learningRate=3.0);
     ~StochasticGradientDecent();
+    void SetLearningRate(double learningRate) { m_learningRate = learningRate; }
+    double GetLearningRate() { return m_learningRate; }
 
-    void Train(Network &network, TrainingData &trainingData, int batchSize, int numBatches=0);
-    void TrainTest(Network &network, DataSet &dataSet, int batchSize, int numBatches=0);
+protected:
+    void TrainBatch(Network &network, std::vector<DataSet> &batchDataSet);
 
 private:
-    void TrainBatch(Network &network, std::vector<DataSet> &batchDataSet);
     void BackPropagate(Network &network, DataSet &dataSet, 
         std::vector<std::vector<double>> &gradBias,
         std::vector<std::vector<std::vector<double>>> &gradWeights);

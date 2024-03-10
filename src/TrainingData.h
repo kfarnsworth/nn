@@ -22,11 +22,13 @@ public:
     TrainingData();
     ~TrainingData();
     bool OpenData(const std::string filename);
-    bool GetFirstDataSet(DataSet &set);
-    bool GetNextDataSet(DataSet &set);
+    bool GetFirstDataSet(DataSet &set, int outIx=-1);
+    bool GetNextDataSet(DataSet &set, int outIx=-1);
     size_t GetInputCount() { return inputCount; };
     size_t GetOutputCount() { return outputCount; };
     bool GetDataSet(int index, DataSet &set);
+    void Clear() { dataSets.clear(); outputSet.clear(); dataEntries=0; };
+    bool IsEmpty() { return dataEntries == 0; }
 
 private:
     std::string dirPrefix;

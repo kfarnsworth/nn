@@ -1,8 +1,9 @@
 #include "Network.h"
 #include "json.hpp"
 
-Network::Network() : m_numInputs(0)
+Network::Network() : m_numInputs(0), m_isTraining(false)
 {
+    
 }
 
 Network::~Network()

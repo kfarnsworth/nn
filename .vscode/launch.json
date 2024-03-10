@@ -13,8 +13,10 @@
                 "configs/nn-digits.json",
                 "-t","training/mnist-training-binary.json",
                 "-b","30",
-                "-n","10",
-                "-r","3.0"
+                "-n","100",
+                "-r","3.0",
+                "-s",
+                "--outputindex", "0"
             ],
             "cwd": "${workspaceFolder}",
             "MIMode": "gdb",
