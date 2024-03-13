@@ -16,6 +16,8 @@ SRCS = $(SRCDIR)/main.cpp \
 	   $(SRCDIR)/TrainingData.cpp \
 	   $(SRCDIR)/Training.cpp \
 	   $(SRCDIR)/StochasticGradientDecent.cpp \
+	   $(SRCDIR)/HttpConnection.cpp \
+	   $(SRCDIR)/RestFull.cpp \
 
 CPPFLAGS+=-I./ -I/usr/include/
 

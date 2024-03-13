@@ -5,6 +5,7 @@
 #include "Training.h"
 #include "Network.h"
 #include "TrainingData.h"
+#include "RestFull.h"
 
 static Network network;
 static TrainingData trainingData;
@@ -218,6 +219,9 @@ int main(int argc, const char *argv[])
     {
         load_training(trainingFilename);
     }
+
+    RestFull rf;
+    rf.Start();
 
     if (startTraining && !trainingData.IsEmpty())
     {

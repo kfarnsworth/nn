@@ -13,6 +13,7 @@ Training::Training(Network &network) : m_network(network)
 
 Training::~Training()
 {
+    StopThread();
 }
 
 std::shared_ptr<Training> Training::GetTrainer(Network &network, std::string type)
