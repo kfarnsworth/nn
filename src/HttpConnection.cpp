@@ -15,7 +15,7 @@ HttpConnection::HttpConnection(std::string path, uint16_t port) : m_port(port), 
         }
         else
         {
-            res.set_content("{ \"result\": \"undone\"}", "application/json");
+            res.set_content("{ \"result\":-1, \"error\":\"no callback\"}", "application/json");
         }
     });
 }
@@ -32,7 +32,7 @@ void HttpConnection::SetHandler(std::function<std::string(const std::string &)> 
 void HttpConnection::HttpThread(void *data)
 {
     (void)data;
-    m_server.listen("localhost", m_port);
+    m_server.listen("0.0.0.0", m_port);
 }
 
 void HttpConnection::Start()

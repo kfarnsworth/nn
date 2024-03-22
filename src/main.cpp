@@ -220,7 +220,7 @@ int main(int argc, const char *argv[])
         load_training(trainingFilename);
     }
 
-    RestFull rf;
+    RestFull rf(network);
     rf.Start();
 
     if (startTraining && !trainingData.IsEmpty())
@@ -352,6 +352,8 @@ int main(int argc, const char *argv[])
             load_training(trainingFilename);
         }
     } while (c != 'q' && c != 'Q');
+
+    rf.Stop();
 
     return 0;
 }
