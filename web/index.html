@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Neural Network</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Neural Network">
+    <meta name="author" content="Farnsworth Technology">
+    <link rel="icon" href="favicon.ico" type="../image/x-icon" />
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.min.js" integrity="sha512-IM60GPudO4jk+ZQm3UlJgKHhXQi5pNDM6mP+pLKL968YgkHMc7He3aGJOVHEZ9rJ4vAaEtJ8W6SKa7Qq4inzBA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="src/network.js"></script>
+    <script src="src/draw.js"></script>
+    <script src="src/file.js"></script>
+    <script src="src/connection.js"></script>
+  </head>
+  <style>
+    html { 
+      font-size: 0.875rem; 
+    }
+    body {
+      padding: 1rem;
+      font-size: 0.875rem;
+    }
+    .modal-dialog {
+      overflow: auto;
+    }
+    .btn {
+      padding: 0.3rem 0.5rem;
+    }
+    .print-modal {
+      width: 100%;
+      height: 100%;
+    }
+    .input-label {
+      display: inline;
+      text-align: right;
+      width: 100px;
+    }
+    .input-box {
+      max-width: 30%;
+    }
+    .input-box-2 {
+      max-width: 60%;
+    }
+    .text-box {
+      max-width: 30%;
+    }
+    .text-box-2 {
+      max-width: 40%;
+    }
+    .select-box {
+      max-width: 30%;
+    }
+    .font-size-box {
+      max-width: 90%;
+    }
+    .input-login {
+      max-width: 80%;
+    }
+    .draw-area {
+      position:relative;
+      overflow: scroll;
+      display: flex;
+      width: 100%;
+      background-color: hsl(0, 0%, 92%);
+      border:1px solid black;
+      padding: 10px;
+    }
+    .canvas-area {
+      position:relative;
+      overflow: scroll;
+      display: flex;
+      width: 100%;
+      background-color: hsl(0, 0%, 92%);
+      border:1px solid black;
+      padding: 10px;
+    }
+    .hidden-file {
+      opacity: 0;
+    }
+    .row {
+      margin-left: 0;
+    }
+    .row-buttons {
+      margin-top: 2px;
+      margin-bottom: 2px;
+    }
+    .small-padding {
+      padding: 5px;
+    }
+    .card-header {
+      padding: 0.25rem 0.50rem;
+    }
+    .card-body {
+      padding: 0.25rem 0.50rem;
+    }
+    .print-area {
+      max-width: 100%;
+      min-width: 100%;
+    }
+    .dropdown-submenu {
+      margin-left: 24px;
+    }
+   </style>
+   <body>
+    <div class="container-fluid">
+      <!-- Menus -->
+      <div class="row">
+        <div class="col-3 mb-2">
+          <div>
+            <div class="btn-group">
+              <button type="button" class="btn btn-primary dropdown-toggle" id="file-drop-down" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                File
+              </button>
+              <div class="dropdown-menu" aria-labelledby="file-drop-down" id="file-menu">
+                <a class="dropdown-item" href="#">New</a>
+                <a class="dropdown-item" href="#">Open</a>
+                <a class="dropdown-item" href="#">Save (Ctl-S)</a>
+                <a class="dropdown-item" href="#">Save As</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#">About</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zoom buttons -->
+        <div class="col-3 mb-2">
+          <div class="btn-toolbar" id="buttontoolbar">
+            <div class="input-group input-group-sm">
+              <button type="button" class="btn btn-default btn-sm" id=zoom-in>
+                <span class="fa fa-search-minus"></span> Zoom-in
+              </button>
+              <button type="button" class="btn btn-default btn-sm" id=zoom-out>
+                <span class="fa fa-search-plus"></span> Zoom-out
+              </button>
+              <input type="text" class="form-control input-box float-number zoom-param" id="zoom-box">
+            </div>
+          </div>
+        </div>
+
+        <!-- Connection -->
+        <div class="col-3 mb-2">
+          <div class="input-group input-group-sm">
+            <button type="button" class="btn btn-primary btn-md row-button" id=host-connect-button>Connect</button>
+            <input type="text" class="form-control" id="host-connection">
+          </div>
+        </div>
+      </div>
+
+      <!-- Left panel -->
+      <div class="row">
+          <div class="col-3">
+            <div class="card border">
+              <h7 class="card-header">Neural Network Settings</h7>
+              <div class="card-body">
+                <form class="network-params">
+                  <div class="row">
+                    <div class="input-group mb-1 input-group-sm">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text input-label" id="startNumber-label">Inputs:</span>
+                      </div>
+                      <input type="number" class="form-control input-box network-param" min="1" id="networkInputs">
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="input-group mb-1 input-group-sm">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text input-label" id="totalPagesNumber-label">Outputs:</span>
+                      </div>
+                      <input type="number" class="form-control input-box network-param" min="1" id="networkOutputs">
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-7 small-padding">
+                      <select class="custom-select" size="4" id="layer-list" multiple>
+                        <option value="1" selected>Layer1</option>
+                      </select>
+                    </div>
+                    <div class="col-sm-5 small-padding text-center">
+                      <div class="row">
+                        <button type="button" class="btn btn-info btn-md row-buttons" id="add-button">Add</button>
+                      </div>
+                      <div class="row">
+                        <button type="button" class="btn btn-info btn-md row-buttons" id="delete-button" disabled>Delete</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="input-group mb-1 input-group-sm">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text input-label" id="nodes-label">Nodes:</span>
+                      </div>
+                      <input type="number" class="form-control input-box layer-param" min="1" id="layerNodes">
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="input-group mb-1 input-group-sm">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text input-label" id="defaultBias-label">DefBias:</span>
+                      </div>
+                      <input type="number" class="form-control input-box float-number layer-param" min=-10.0 step="0.10" max=10.0 id="layerDefaultBias">
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div class="card border">
+              <h7 class="card-header">Measurement</h7>
+              <div class="card-body p-1">
+                <form>
+                  <div class="row">
+                    <div class="col-6">
+                      <button type="button" class="btn btn-info btn-md row-buttons" id="measure-button">Measure</button>
+                    </div>
+                    <div class="col-6">
+                      <div class="form-check form-control-sm">
+                        <label class="form-check-label" id="qrc-check-label">
+                          <input type="checkbox" class="form-check-input" id="qrc-check">Continuous
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-6 draw-area" id="drawareadiv">
+                    </div>
+                    <div class="col-6">
+                      <div class="row">
+                        <div class="input-group mb-1 input-group-sm">
+                          <div class="input-group-prepend">
+                            <span class="input-group-text input-label-min" id="x-label">X:</span>
+                          </div>
+                          <input type="text" class="form-control text-box-2 head-param" id="x-size" readonly>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="input-group mb-1 input-group-sm">
+                          <div class="input-group-prepend">
+                            <span class="input-group-text input-label-min" id="y-label">Y:</span>
+                          </div>
+                          <input type="text" class="form-control text-box-2 head-param" id="y-size" readonly>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div class="card border">
+              <h7 class="card-header">Training</h7>
+              <div class="card-body p-1">
+                <form>
+                  <div class="row">
+                    <div class="input-group mb-1 input-group-sm">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text input-label"  id="trainingType-label">Type:</span>
+                      </div>
+                      <select class="custom-select select-box head-param" size="1" id=trainingType">
+                        <option value="0">SGD</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="input-group mb-1 input-group-sm">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text input-label" id="xposNumber-label">Learn Rate:</span>
+                      </div>
+                      <input type="number" class="form-control input-box float-number head-param" min=1.0 step="0.1" max=10.0 id="learningRate">
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="input-group mb-1 input-group-sm">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text input-label" id="batchSize-label">Batch Size:</span>
+                      </div>
+                      <input type="number" class="form-control input-box train-param" min="1" id="batchSize">
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="input-group mb-1 input-group-sm">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text input-label" id="batchCount-label">Batch Count:</span>
+                      </div>
+                      <input type="number" class="form-control input-box train-param" min="1" id="batchCount">
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="input-group mb-1 input-group-sm">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text input-label"  id="outputType-label">Output:</span>
+                      </div>
+                      <select class="custom-select select-box head-param" size="1" id="outputType">
+                        <option value="0">ALL</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <button type="button" class="btn btn-info btn-md row-buttons" id="training-button">Start Training</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-9 canvas-area" id="canvasesdiv">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- About Modal -->
+    <div class="modal fade" id="about-modal"  tabindex="-1" role="dialog" aria-labelledby="about-modal-label" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 class="modal-title">About</h4>
+          </div>
+          <!-- Modal body -->
+          <div class="modal-body">
+            <div class="row">
+              <h5>Neural Network</h5>
+            </div>
+            <div class="row">
+                <h5><span class="badge badge-primary" id="version-string">Version 0.0.0</span></h5>
+            </div>
+            <div class="row">
+              <h5>Copyright (c) 2024 fARNtECH</h5>
+          </div>
+        </div>
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filename Modal -->
+    <div class="modal fade filename-modal" id="filename-modal"  tabindex="-1" role="dialog" aria-labelledby="filename-modal-label" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 class="modal-title">Download</h4>
+          </div>
+          <!-- Modal body -->
+          <div class="modal-body">
+            <form>
+              <div class="row">
+                <div class="form-group">
+                  <label for="filename-entered">Filename:</label>
+                  <input class="form-control input-login" type="text" id="filename-entered">
+                </div>
+              </div>
+              <div class="row">
+                <input type="submit" class="btn btn-success row-buttons" value="Download" id="filename-download-button">
+              </div>
+            </form>
+          </div>
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div class="modal fade confirm-modal" id="confirm-modal"  tabindex="-1" role="dialog" aria-labelledby="confirm-modal-label" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 class="modal-title" id="confirm-head-text">Head text</h4>
+          </div>
+          <!-- Modal body -->
+          <div class="modal-body">
+            <div class="row">
+              <h5 id="confirm-body-text">Body text.</h5>
+            </div>
+          </div>
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="main_unconfirm_pressed()" >No</button>
+            <button type="button" class="btn btn-primary" onclick="main_confirm_pressed()" >Yes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div class="modal fade alert-modal" id="alert-modal"  tabindex="-1" role="dialog" aria-labelledby="alert-modal-label" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 class="modal-title" id="alert-head-text">Alert</h4>
+          </div>
+          <!-- Modal body -->
+          <div class="modal-body">
+            <div class="row">
+              <h5 id="alert-body-text">ERROR!</h5>
+            </div>
+          </div>
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hidden-file">
+      <input type="file" id="file-open" accept=".json">
+    </div>
+   </body>
+
+   <script>
+    //-----------------------------------------------------------------------
+    // copyright (c) 2024 Farnsworth Technology
+    //-----------------------------------------------------------------------
+     $(document).ready(function() {
+      const VERSION_MAJOR=0;
+      const VERSION_MINOR=0;
+      const VERSION_MAINT=0;
+      $('#version-string').html("Version " + VERSION_MAJOR + "." + VERSION_MINOR + "." + VERSION_MAINT);
+      network_init();
+      $('#zoom-box').val("1.00");
+      $('#filename-download-button').click(function() {
+        var filename = $("#filename-entered").val();
+        $("#filename-modal").modal('hide');
+        file_save_now(filename);
+      });
+
+      $('.input-box').on('keypress', function(event) {
+          var keyCode = event.keyCode || event.which;
+          var txt = this.value + String.fromCharCode(keyCode);
+          var regex;
+          if ($(this).hasClass('float-number')) {
+            regex = /^[0-9]*(\.[0-9]*)?$/;
+          }
+          else
+            regex = /^[0-9]+$/;
+          var isValid = regex.test(txt);
+          return isValid;
+      });
+      $('.input-box').on("input", function(event) {
+          if ($(this).hasClass('network-param')) {
+            network_parameter_change(this.id);
+          }
+          else if ($(this).hasClass('train-param')) {
+            network_training_change(this.id);
+          }
+          else if ($(this).hasClass('layer-param')) {
+            var all_selected = $("#layer-list :selected").map((_, e) => e.value).get();
+            network_layer_change(all_selected, this.id);
+          }
+          else if ($(this).hasClass('zoom-param')) {
+            var z = $('#zoom-box').val();
+            draw_zoom_number(parseFloat(z));
+          }
+      });
+      $('.input-box').focusout(function(event){
+        if ($(this).hasClass('network-param')) {
+          network_update();
+        }
+        else if ($(this).hasClass('layer-param')) {
+          var all_selected = $("#layer-list :selected").map((_, e) => e.value).get();
+            network_layer_change(all_selected, this.id, false);
+        }
+      });
+
+      $('#layer-list').on('change', function (e) {
+          var all_selected = $("#layer-list :selected").map((_, e) => e.value).get();
+          network_layer_update(all_selected);
+      });
+
+      $('#input-box').on('change', function (e) {
+          if ($(this).hasClass('layer-params')) {
+            var all_selected = $("#layer-list :selected").map((_, e) => e.value).get();
+            network_layer_change(all_selected, this.id);
+          }
+      });
+
+      $('.text-box').on('input', function (e) {
+          var all_selected = $("#layer-list :selected").map((_, e) => e.value).get();
+          network_layer_change(all_selected, this.id);
+      });
+
+      $('.text-box-2').on('input', function (e) {
+          var all_selected = $("#layer-list :selected").map((_, e) => e.value).get();
+          network_layer_change(all_selected, this.id);
+      });
+
+      $('#host-connect-button').click(function() {
+          var host = $('#host-connection').val()
+          connection_connect(host);
+      });
+
+      $('#add-button').click(function() {
+          network_add_layer();
+      });
+
+      $('#delete-button').click(function() {
+          network_delete_layer();
+      });
+
+      $('#zoom-in').click(function() {
+          draw_zoom(true);
+      });
+
+      $('#zoom-out').click(function() {
+          draw_zoom(false);
+      });
+
+      $('#file-menu').on('click', 'a', function () {
+          var item = $(this).text();
+          if (item.startsWith("New")) {
+            network_check_changes(network_new, "New");
+          } else if (item.startsWith("Open")) {
+            network_check_changes(file_open_modal, "Open");
+          } else if (item.startsWith("Save As")) {
+            file_network_saveas();
+          } else if (item.startsWith("Save")) {
+            file_network_save();
+          } else if (item == "About") {
+            $("#about-modal").modal('show');
+          }
+      });
+      
+      $('#view-menu').on('click', 'a', function () {
+          var item = $(this).text();
+          if (item == "Zoom In") {
+            draw_zoom(true);
+          }
+          else if (item == "Zoom Out") {
+            draw_zoom(false);
+          }
+      });
+      $('#file-open').change(function(){
+          var file = $('#file-open')[0].files[0];
+          file_open(file, network_refresh_all);
+          $(this).attr("value", "");
+      });
+      function file_open_modal()
+      {
+        $('#file-open').trigger('click');
+      }
+    });
+  </script>
+
+</html>
