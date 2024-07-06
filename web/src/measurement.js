@@ -28,19 +28,27 @@ function measurement_set_inputs(numInputs)
     }
     var canvas = document.createElement('canvas');
     drawcanvasChild = canvas;
-    canvas.width = Math.ceil(MEASURE_WIDTH_INCHES * MEASURE_PIXELS_PERINCH);
-    canvas.height = Math.ceil(MEASURE_HEIGHT_INCHES * MEASURE_PIXELS_PERINCH);
+    sideLen = Math.ceil(Math.sqrt(numInputs));
+    numPixels = Math.pow(sideLen, 2);
+    var canvasAppoxWidth = Math.ceil(MEASURE_WIDTH_INCHES * MEASURE_PIXELS_PERINCH);
+    var canvasAppoxHeight = Math.ceil(MEASURE_HEIGHT_INCHES * MEASURE_PIXELS_PERINCH);
+    canvasWidth = Math.ceil(canvasAppoxWidth / sideLen) * sideLen;
+    canvasHeight = Math.ceil(canvasAppoxHeight / sideLen) * sideLen;
+    if (canvasWidth > drawarea.offsetWidth) 
+        canvasWidth = Math.floor(canvasAppoxWidth / sideLen) * sideLen;
+    if (canvasHeight > drawarea.offsetHeight) 
+        canvasHeight = Math.floor(canvasAppoxHeight / sideLen) * sideLen;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
     canvas.style.zIndex = 1;
     canvas.style.position = "absolute";
     canvas.style.border = "none";
     drawarea.appendChild(canvas);
     
-    sideLen = Math.ceil(Math.sqrt(numInputs));
-    numPixels = Math.pow(sideLen, 2);
     pixels = [];
     for (var i=0; i<numPixels; i++)
     {
-        pixels.push(255);
+        pixels.push(0);
     }
     measurement_draw();
     measurement_setup_mouse_events(canvas);
@@ -55,11 +63,18 @@ function measurement_draw()
     {
         for (var col=0; col<sideLen; col++)
         {
-            measurement_draw_pixel(row * pixWidth, col * pixHeight, pixels[row * sideLen + col]);
+            measurement_draw_pixel(row * pixWidth, col * pixHeight, 255 - pixels[row * sideLen + col]);
         }
     }
 }
 
+function measurement_update_pixel(row, col, value)
+{
+    pixels[row * sideLen + col] = value;
+}
+
+var pixLastDrawX = -1;
+var pixLastDrawY = -1;
 function measurement_draw_pixel(X, Y, C)
 {
     var pixWidth = Math.floor(drawcanvasChild.width / sideLen);
@@ -71,6 +86,11 @@ function measurement_draw_pixel(X, Y, C)
     ctx.strokeStyle = `rgb(${C}, ${C}, ${C})`;
     ctx.lineWidth = "1";
     ctx.fillRect(pixLocX, pixLocY, pixWidth, pixHeight);
+    measurement_update_pixel(Math.floor(pixLocX/pixWidth), Math.floor(pixLocY/pixHeight), 255 - C);
+    var newPix =  pixLocX != pixLastDrawX || pixLocY != pixLastDrawY;
+    pixLastDrawX = pixLocX;
+    pixLastDrawY = pixLocY;
+    return newPix;
 }
 
 function measurement_clear()
@@ -78,7 +98,7 @@ function measurement_clear()
     pixels = [];
     for (var i=0; i<numPixels; i++)
     {
-        pixels.push(255);
+        pixels.push(0);
     }
     measurement_draw();
 }
@@ -93,15 +113,18 @@ function measurement_get_input()
     return data;
 }
 
-
 //=======================================================================
 var pressed = false;
 var mouseXloc = 0;
 var mouseYloc = 0;
+const COLOR_GREY_LIGHTEST = 220;
+const COLOR_GREY_DARKEST = 0;
+const COLOR_GREY_INCR = 15;
+var mouseColor = COLOR_GREY_LIGHTEST;
 
 function measurement_mouse_down(mouseX, mouseY)
 {
-    console.log("DOWN " + mouseX + ":" + mouseY);
+    //console.log("DOWN " + mouseX + ":" + mouseY);
     pressed = true;
     mouseXloc = mouseX;
     mouseYloc = mouseY;
@@ -109,8 +132,10 @@ function measurement_mouse_down(mouseX, mouseY)
 
 function measurement_mouse_up(mouseX, mouseY)
 {
-    console.log("UP " + mouseX + ":" + mouseY);
+    //console.log("UP " + mouseX + ":" + mouseY);
     pressed = false;
+    mouseColor = COLOR_GREY_LIGHTEST;
+    network_set_input_values(pixels);
 }
 
 function measurement_mouse_move(deltaX, deltaY)
@@ -119,8 +144,17 @@ function measurement_mouse_move(deltaX, deltaY)
     {
         mouseXloc += deltaX;
         mouseYloc += deltaY;
-        console.log("MOVE " + mouseXloc + ":" + mouseYloc);
-        measurement_draw_pixel(mouseXloc, mouseYloc, 0);
+        //console.log("MOVE " + mouseXloc + ":" + mouseYloc + ":" +  mouseColor);
+        if (measurement_draw_pixel(mouseXloc, mouseYloc, mouseColor) == true)
+        {
+            mouseColor = COLOR_GREY_LIGHTEST;
+        }
+        else
+        {
+            mouseColor -= COLOR_GREY_INCR;
+            if (mouseColor < COLOR_GREY_DARKEST)
+                mouseColor = COLOR_GREY_DARKEST;
+        }
     }
 }
 
@@ -128,6 +162,8 @@ function measurement_mouse_out()
 {
     console.log("OUT ");
     pressed = false;
+    mouseColor = COLOR_GREY_LIGHTEST;
+    network_set_input_values(pixels);
 }
 
 function measurement_setup_mouse_events(canvas)
@@ -172,9 +208,4 @@ function measurement_setup_mouse_events(canvas)
     //    if (draggable)
     //        e.preventDefault();
     //});
-}
-
-function measurement_measure()
-{
-    
 }

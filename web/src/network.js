@@ -494,3 +494,21 @@ function network_get_random_weight(inputs)
     const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
     return z * standardDeviation;
 }
+
+function network_set_output_values(outputs)
+{
+    var maxOutputs = network_get_outputs();
+    for(let i=0; i< maxOutputs; i++)
+    {
+        draw_set_output(i, outputs[i]);
+    }
+}
+
+function network_set_input_values(inputs)
+{
+    var maxInputs = network_get_inputs();
+    for(let i=0; i< maxInputs; i++)
+    {
+        draw_set_input(i, inputs[i] / 255);
+    }
+}

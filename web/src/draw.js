@@ -20,6 +20,7 @@ const DRAW_START_COUNT = 10;
 const DRAW_STOP_COUNT = 2;
 const DRAW_INPUT_BOX_SIZE = 0.2;
 const DRAW_NODE_CIRCLE_SIZE = 0.2;
+const DRAW_OUTPUT_BOX_SIZE = 0.2;
 const DRAW_DOT_SIZE = 0.1;
 
 var draw_info = {
@@ -79,6 +80,11 @@ function draw_inches_to_pixels(inches)
     return Math.round(inches * PIXELS_PERINCH);
 }
 
+function draw_pixels_to_inches(pixels)
+{
+    return pixels / PIXELS_PERINCH;
+}
+
 function draw_twips_to_pixels(twips)
 {
     return Math.round(twips / TWIPS_PERPIXEL);
@@ -124,7 +130,7 @@ function draw_input_box(ctx, xPos, yPos)
     var hPixels = draw_inches_to_pixels(0.2 * zoom_draw);
     var wPixels = draw_inches_to_pixels(0.2 * zoom_draw);
     ctx.beginPath();
-    ctx.rect(xPoint, yPoint, hPixels, wPixels);
+    ctx.rect(xPoint, yPoint, wPixels, hPixels);
     ctx.stroke();
 }
 
@@ -206,9 +212,9 @@ function draw_output_box(ctx, xPos, yPos)
     var hPixels = draw_inches_to_pixels(0.2 * zoom_draw);
     var wPixels = draw_inches_to_pixels(0.2 * zoom_draw);
     ctx.beginPath();
-    ctx.rect(xPoint, yPoint, hPixels, wPixels);
+    ctx.rect(xPoint, yPoint, wPixels, hPixels);
     ctx.stroke();
-    draw_connect_line(ctx, xPos - DRAW_COLUMN_PACING + DRAW_NODE_CIRCLE_SIZE, 
+    draw_connect_line(ctx, xPos - DRAW_COLUMN_PACING + DRAW_OUTPUT_BOX_SIZE, 
                     yPos + 0.1, xPos, yPos + 0.1);
 }
 
@@ -298,7 +304,7 @@ function draw_redraw()
     yPos = DRAW_TOP_MARGIN;
     var outputCnt = network_get_outputs();
     if (outputCnt > DRAW_MAX_PER_COLUMN)
-    outputCnt = DRAW_START_COUNT;
+        outputCnt = DRAW_START_COUNT;
     for (var i=0; i<outputCnt; i++) {
         draw_output_box(ctx, xPos, yPos);
         yPos += DRAW_ROW_PACING;
@@ -319,6 +325,87 @@ function draw_redraw()
     }
 }
 
+function draw_set_output(outIndex, value)
+{
+    var xPos = DRAW_LEFT_MARGIN + (DRAW_COLUMN_PACING * (network_get_layers() + 1)) + DRAW_OUTPUT_BOX_SIZE + 0.1;
+    var yPos = DRAW_TOP_MARGIN;
+    var lastOutputIndex = DRAW_MAX_PER_COLUMN;
+    if (network_get_outputs() > DRAW_MAX_PER_COLUMN)
+        lastOutputIndex = DRAW_START_COUNT;
+    if (outIndex < lastOutputIndex)
+        yPos += outIndex * DRAW_ROW_PACING; 
+    else if (outIndex >= network_get_outputs() - DRAW_STOP_COUNT)
+        yPos += ((DRAW_STOP_COUNT - (network_get_outputs() - outIndex)) * DRAW_ROW_PACING) + ((DRAW_START_COUNT + 3) * DRAW_ROW_PACING) + 0.2;
+    else
+        return; // not visible
+    var ctx = canvasChild.getContext('2d');
+    var zoom_draw = draw_zoom_scale();
+    var xPosPixels = draw_inches_to_pixels(xPos);
+    var yPosPixels = draw_inches_to_pixels(yPos);
+    var xPoint = Math.ceil(xPosPixels * zoom_draw);
+    var yPoint = Math.ceil(yPosPixels * zoom_draw);
+    var hPixels = draw_inches_to_pixels(0.2 * zoom_draw);
+    var wPixels = draw_inches_to_pixels(0.4 * zoom_draw);
+
+    // clear area
+    ctx.beginPath();
+    ctx.strokeStyle = 'hsl(0, 0%, 92%)';
+    ctx.rect(xPoint, yPoint, wPixels, hPixels);
+    ctx.stroke();
+    ctx.fillStyle = 'hsl(0, 0%, 92%)';
+    ctx.fill();
+
+    let str = value.toFixed(2);
+    let metrics = ctx.measureText(str);
+    let textHeight = Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+    yPoint += draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE); // bottom left corner for fillText
+    yPoint -= (draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE) - textHeight) / 2; // center against box
+    ctx.font = 400 + " " + 12 + "pt " + "Times New Roman";
+    ctx.fillStyle = "black";
+    ctx.strokeStyle = "black";
+    ctx.fillText(str, xPoint, yPoint);
+}
+
+function draw_set_input(inIndex, value)
+{
+    var xPos = DRAW_LEFT_MARGIN - 0.4;
+    var yPos = DRAW_TOP_MARGIN;
+    var lastInputIndex = DRAW_MAX_PER_COLUMN;
+    if (network_get_inputs() > DRAW_MAX_PER_COLUMN)
+        lastInputIndex = DRAW_START_COUNT;
+    if (inIndex < lastInputIndex)
+        yPos += inIndex * DRAW_ROW_PACING; 
+    else if (inIndex >= network_get_inputs() - DRAW_STOP_COUNT)
+        yPos += ((DRAW_STOP_COUNT - (network_get_inputs() - inIndex)) * DRAW_ROW_PACING) + ((DRAW_START_COUNT + 3) * DRAW_ROW_PACING) + 0.2;
+    else
+        return; // not visible
+    var ctx = canvasChild.getContext('2d');
+    var zoom_draw = draw_zoom_scale();
+    var xPosPixels = draw_inches_to_pixels(xPos);
+    var yPosPixels = draw_inches_to_pixels(yPos);
+    var xPoint = Math.ceil(xPosPixels * zoom_draw);
+    var yPoint = Math.ceil(yPosPixels * zoom_draw);
+    var hPixels = draw_inches_to_pixels(0.2 * zoom_draw);
+    var wPixels = draw_inches_to_pixels(0.3 * zoom_draw);
+
+    // clear area
+    ctx.beginPath();
+    ctx.strokeStyle = 'hsl(0, 0%, 92%)';
+    ctx.rect(xPoint, yPoint, wPixels, hPixels);
+    ctx.stroke();
+    ctx.fillStyle = 'hsl(0, 0%, 92%)';
+    ctx.fill();
+
+    let str = value.toFixed(2);
+    let metrics = ctx.measureText(str);
+    let textHeight = Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+    yPoint += draw_inches_to_pixels(DRAW_INPUT_BOX_SIZE); // bottom left corner for fillText
+    yPoint -= (draw_inches_to_pixels(DRAW_INPUT_BOX_SIZE) - textHeight) / 2; // center against box
+    ctx.font = 400 + " " + 12 + "pt " + "Times New Roman";
+    ctx.fillStyle = "black";
+    ctx.strokeStyle = "black";
+    ctx.fillText(str, xPoint, yPoint);
+}
 
 function draw_zoom_number(z)
 {

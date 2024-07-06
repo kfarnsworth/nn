@@ -555,18 +555,17 @@
           draw_zoom(false);
       });
       
-      $('#host-connect-button').click(function() {
+      $('#measure-button').click(function() {
+        $("#measure-button").prop('disabled', true);
           connection_get_measurement(function(info) {
               console.log(info);
+              $("#measure-button").prop('disabled', false);
+              network_set_output_values(info.output);
           });
       });
 
       $('#clear-button').click(function() {
           measurement_clear();
-      });
-
-      $('#measure-button').click(function() {
-          measurement_measure();
       });
 
       $('#file-menu').on('click', 'a', function () {
