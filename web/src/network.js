@@ -10,7 +10,7 @@ const DEFAULT_BIAS = -1.0;
 var layerCopiesList = [];
 
 const nodeInfo = {
-    biases: [],
+    bias: 0.0,
     weights: []
 };
 
@@ -46,14 +46,14 @@ function network_new()
         var node = structuredClone(nodeInfo);
         for (var j=0; j<DEFAULT_INPUTS; j++)
         {
-            node.biases.push(DEFAULT_BIAS);
+            node.bias = DEFAULT_BIAS;
             node.weights.push(network_get_random_weight(DEFAULT_INPUTS));
         }
         layer.nodes.push( node );
     
     }
     layerList.push(layer);
-    draw_redraw();
+    network_update();
 }
 
 function network_get_inputs(layerIx=0)
@@ -82,13 +82,13 @@ function network_get_nodes(layerIx)
     return layerList[layerIx].nodes.length;
 }
 
-function network_get_node_biases(layerIx, nodeIx)
+function network_get_node_bias(layerIx, nodeIx)
 {
     if (layerIx < 0 || layerIx >= layerList.length)
         return 0;
     if (nodeIx < 0 || nodeIx >= layerList[layerIx].nodes.length)
         return 0;
-    return layerList[layerIx].nodes[nodeIx].biases;
+    return layerList[layerIx].nodes[nodeIx].bias;
 }
 
 function network_get_node_weights(layerIx, nodeIx)
@@ -119,9 +119,9 @@ function network_new_layer(optValue)
         for (var i=0; i<layerList[0].nodes.length; i++)
         {
             var node = structuredClone(nodeInfo);
+            node.bias = layer.def_bias;
             for (var j=0; j<layer.inputs; j++)
             {
-                node.biases.push(layer.def_bias);
                 node.weights.push(network_get_random_weight(layer.inputs));
             }
             layer.nodes.push( node );
@@ -130,12 +130,11 @@ function network_new_layer(optValue)
         layer[1].inputs = layerList[0].nodes.length;
         for (var i=0; i<layerList[1].nodes.length; i++)
         {
-            layerList[1].nodes.biases = [];
+            layerList[1].nodes.bias = DEFAULT_BIAS;
             layerList[1].nodes.weights = [];
             for (var j=0; j<layer[0].nodes; j++)
             {
-                node.biases.push(DEFAULT_BIAS);
-                node.weights.push(network_get_random_weight(layer[1].inputs));
+                layer[j].nodes.weights.push(network_get_random_weight(layerList[1].nodes.length));
             }
         }
     }
@@ -144,9 +143,9 @@ function network_new_layer(optValue)
         for (var i=0; i<layerList[layerList.length-1].nodes.length; i++)
         {
             var node = structuredClone(nodeInfo);
+            node.bias = DEFAULT_BIAS;
             for (var j=0; j<layer.inputs; j++)
             {
-                node.biases.push(DEFAULT_BIAS);
                 node.weights.push(network_get_random_weight(layer.inputs));
             }
             layer.nodes.push( node );
@@ -159,9 +158,9 @@ function network_new_layer(optValue)
         for (var i=0; i<layerList[optValue-2].nodes.length; i++)
         {
             var node = structuredClone(nodeInfo);
+            node.bias = DEFAULT_BIAS;
             for (var j=0; j<layer.inputs; j++)
             {
-                node.biases.push(DEFAULT_BIAS);
                 node.weights.push(network_get_random_weight(layer.inputs));
             }
             layer.nodes.push( node );
@@ -171,7 +170,7 @@ function network_new_layer(optValue)
     var length = $('#layer-list option').length + 1;
     var optText = "Layer" + length;
     $('#layer-list').append(`<option value="${length}">${optText}</option>`);
-    draw_redraw();
+    network_update();
 }
 
 function network_add_layer()
@@ -205,11 +204,10 @@ function network_layer_remove(selected)
         for (var i=0; i<layerList[selected-1].nodes.length; i++)
         {
             let node = layerList[0].nodes[i];
-            node.biases = [];
+            node.bias = DEFAULT_BIAS;
             node.weights = [];
             for (var j=0; j<inputs; j++)
             {
-                node.biases.push(DEFAULT_BIAS);
                 node.weights.push(network_get_random_weight(inputs));
             }
         }
@@ -226,7 +224,7 @@ function network_layer_remove(selected)
         layer.text("Layer" + i);
         layer.attr("value",i);
     }
-    draw_redraw();
+    network_update();
 }
 
 function network_delete_layer()
@@ -314,9 +312,9 @@ function network_parameter_change(param_id)
                 let node = structuredClone(nodeInfo);
                 let nodeInputCnt = (layerList.length == 0) ? layerList[0].inputs : 
                                     layerList[layerList.length-1].nodes.length;
+                node.bias = DEFAULT_BIAS;
                 for (var j=0; j<nodeInputCnt; j++)
                 {
-                    node.biases.push(DEFAULT_BIAS);
                     node.weights.push(network_get_random_weight(nodeInputCnt));
                 }
                 layerList[layerList.length-1].nodes.push(node);
@@ -326,11 +324,11 @@ function network_parameter_change(param_id)
     }
     if (change)
     {
-        draw_redraw();
+        network_update();
     }
 }
 
-function network_load_config(network)
+function network_save_config(network)
 {
     layerList = []
     var inputs = network["inputs"];
@@ -340,16 +338,12 @@ function network_load_config(network)
         let layer = structuredClone(layerInfo);
         for (var j=0; j<networkLayer["nodes"].length; j++)
         {
-            let networkNodes = networkLayer["nodes"][j];
+            let networkNode = networkLayer["nodes"][j];
             let node = structuredClone(nodeInfo);
-            for (var k=0; k<networkNodes.length; k++)
+            node.bias = networkNode.bias;
+            for (var k=0; k<networkNode.weights.length; k++)
             {
-                let networkNode = networkNodes[k];
-                for (var l=0; l<networkNode.biases.length && l<networkNode.weights.length; l++)
-                {
-                    node.biases.push(networkNode.biases[l]);
-                    node.weights.push(networkNode.weights[l]);
-                }
+                node.weights.push(networkNode.weights[k]);
             }
             layer.nodes.push( node );
         }
@@ -358,7 +352,7 @@ function network_load_config(network)
         inputs = layer.nodes.length;
         layerList.push(layer);
     }
-    draw_redraw();
+    network_update();
 
     $('#networkInputs').val(network_get_inputs());
     $('#networkOutputs').val(network_get_outputs());
@@ -370,6 +364,35 @@ function network_load_config(network)
     $('#layerNodes').val(network_get_nodes(0));
     $('#layerDefaultBias').val(layerList[0].def_bias);
     
+}
+
+function network_read_config()
+{
+    var network = {};
+    network["inputs"] = network_get_inputs();
+    let layers = [];
+    for (var i=0; i<network_get_layers(); i++)
+    {
+        let layer = {};
+        layer["nodes"] = [];
+        let nodeCnt = network_get_nodes(i);
+        for (var j=0; j<nodeCnt; j++)
+        {
+            let node = {};
+            let bias = network_get_node_bias(i, j);
+            let weights = network_get_node_weights(i, j);
+            if (weights)
+            {
+                node["bias"] = bias;
+                node["weights"] = weights;
+            }
+            layer["nodes"].push(node);
+        }
+        layers.push(layer);
+    }
+    network["layers"] = layers;
+    network["outputs"] = network_get_outputs();
+    return network;
 }
 
 function network_training_change(id)
@@ -399,7 +422,7 @@ function network_layer_change(allLayers, id)
             }
             else {
                 let node = structuredClone(nodeInfo);
-                node.biases.push(layer.def_bias);
+                node.bias = layer.def_bias;
                 node.weights.push(network_get_random_weight(layer.inputs));
                 layer.nodes.push(node);
             }
@@ -412,13 +435,14 @@ function network_layer_change(allLayers, id)
     }
     if (change)
     {
-        draw_redraw();
+        network_update();
     }
 }
 
 function network_update()
 {
     draw_redraw();
+    measurement_set_inputs(network_get_inputs());
 }
 
 function network_layer_update(selected_layers)
@@ -453,12 +477,12 @@ function network_layer_update(selected_layers)
     $('#head-list').val(selected_layers);
     all_selected = selected_layers.length >= layerList.length;
     $('#delete-button').prop('disabled', all_selected || (selected_layers.length == 0));
-    draw_redraw();
+    network_update();
 }
 
 function network_refresh_all()
 {
-    draw_redraw();
+    network_update();
 }
 
 function network_get_random_weight(inputs)

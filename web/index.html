@@ -19,6 +19,7 @@
     <script src="src/draw.js"></script>
     <script src="src/file.js"></script>
     <script src="src/connection.js"></script>
+    <script src="src/measurement.js"></script>
   </head>
   <style>
     html { 
@@ -67,11 +68,14 @@
     .draw-area {
       position:relative;
       overflow: scroll;
-      display: flex;
-      width: 100%;
+      display: block;
+      width: 100px;
+      height: 110px;
       background-color: hsl(0, 0%, 92%);
       border:1px solid black;
-      padding: 10px;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      margin: 0px;
     }
     .canvas-area {
       position:relative;
@@ -147,10 +151,21 @@
         </div>
 
         <!-- Connection -->
-        <div class="col-3 mb-2">
+        <div class="col-1 mb-2">
           <div class="input-group input-group-sm">
-            <button type="button" class="btn btn-primary btn-md row-button" id=host-connect-button>Connect</button>
-            <input type="text" class="form-control" id="host-connection">
+            <button type="button" class="btn btn-primary btn-md row-button" id="host-connect-button">Connect</button>
+          </div>
+        </div>
+        <!-- Get Network -->
+        <div class="col-1 mb-2">
+          <div class="input-group input-group-sm">
+            <button type="button" class="btn btn-primary btn-md row-button" id="get-network-button" disabled>GetNetwork</button>
+          </div>
+        </div>
+        <!-- Set Network -->
+        <div class="col-1 mb-2">
+          <div class="input-group input-group-sm">
+            <button type="button" class="btn btn-primary btn-md row-button" id="set-network-button" disabled>SetNetwork</button>
           </div>
         </div>
       </div>
@@ -247,6 +262,9 @@
                           </div>
                           <input type="text" class="form-control text-box-2 head-param" id="y-size" readonly>
                         </div>
+                      </div>
+                      <div class="row">
+                        <button type="button" class="btn btn-success btn-md row-buttons" id="clear-button">Clear</button>
                       </div>
                     </div>
                   </div>
@@ -502,7 +520,23 @@
 
       $('#host-connect-button').click(function() {
           var host = $('#host-connection').val()
-          connection_connect(host);
+          $("#host-connect-button").prop('disabled', true);
+          $("#get-network-button").prop('disabled', true);
+          $("#set-network-button").prop('disabled', true);
+          connection_connect(host, function(status) {
+            console.log(status);
+            $("#host-connect-button").prop('disabled', status);
+            $("#get-network-button").prop('disabled', !status);
+            $("#set-network-button").prop('disabled', !status);
+          });
+      });
+
+      $('#get-network-button').click(function() {
+          connection_get_network();
+      });
+
+      $('#set-network-button').click(function() {
+          connection_set_network();
       });
 
       $('#add-button').click(function() {
@@ -519,6 +553,20 @@
 
       $('#zoom-out').click(function() {
           draw_zoom(false);
+      });
+      
+      $('#host-connect-button').click(function() {
+          connection_get_measurement(function(info) {
+              console.log(info);
+          });
+      });
+
+      $('#clear-button').click(function() {
+          measurement_clear();
+      });
+
+      $('#measure-button').click(function() {
+          measurement_measure();
       });
 
       $('#file-menu').on('click', 'a', function () {

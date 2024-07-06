@@ -144,15 +144,58 @@ std::vector<double> &Network::GetOutputDerivatives(int layerIx)
 
 void Network::Measure(const std::vector<double> &inputs)
 {
+    std::unique_lock<std::mutex> lock(m_MeasureMutex);
     std::vector<double> lastInputs = inputs;
     for (size_t i = 0; i<m_layers.size(); i++)
     {
         m_layers[i].Measure(lastInputs);
         lastInputs = m_layers[i].GetOutputs();
     }
+    stateInputs = inputs;
 }
 
 std::vector<double> &Network::GetOutputs()
 {
     return m_layers.back().GetOutputs();
+}
+
+void Network::GetInputState(std::vector<double> &inputs)
+{
+    std::unique_lock<std::mutex> lock(m_MeasureMutex);
+    inputs = stateInputs;
+}
+
+void Network::GetOutputState(int layerIx, std::vector<double> &outputs)
+{
+    if (layerIx >= LayerCount()) throw std::runtime_error("layer index out of range");
+    std::unique_lock<std::mutex> lock(m_MeasureMutex);
+    outputs = m_layers[layerIx].GetOutputs();
+}
+
+void Network::GetBiasState(int layerIx, std::vector<double> &biases)
+{
+    if (layerIx >= LayerCount()) throw std::runtime_error("layer index out of range");
+    std::unique_lock<std::mutex> lock(m_MeasureMutex);
+    biases.clear();
+    int nodeCount = GetNodeCount(layerIx);
+    for (int nodeIx=0; nodeIx<nodeCount; nodeIx++)
+    {
+        double bias;
+        GetNodeBias(layerIx, nodeIx, bias);
+        biases.push_back(bias);
+    }
+}
+
+void Network::GetWeightsState(int layerIx, std::vector<std::vector<double>> &weightsPerNode)
+{
+    if (layerIx >= LayerCount()) throw std::runtime_error("layer index out of range");
+    std::unique_lock<std::mutex> lock(m_MeasureMutex);
+    weightsPerNode.clear();
+    int nodeCount = GetNodeCount(layerIx);
+    for (int nodeIx=0; nodeIx<nodeCount; nodeIx++)
+    {
+        std::vector<double> weights; 
+        GetNodeWeights(layerIx, nodeIx, weights);
+        weightsPerNode.push_back(weights);
+    }
 }

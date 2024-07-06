@@ -1,7 +1,7 @@
 Q:=@
 CPP=g++
 LD=g++
-CPPFLAGS =--std=c++11 -g -Wall -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)"
+CPPFLAGS =-std=gnu++17 -g -Wall -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)"
 LDFLAGS=-L/usr/lib/x86_64-linux-gnu
 OUTDIR=bin
 LIBS=-lstb -lpthread

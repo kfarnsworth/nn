@@ -91,7 +91,7 @@ function deserialize(buffer, filename, filesize)
     try {
         var s = String.fromCharCode.apply(null, new Uint8Array(buffer));
         var config = JSON.parse(s);
-        network_load_config(config["network"]);
+        network_save_config(config["network"]);
     } catch (err) {
         console.log(err.message);
     }
@@ -99,32 +99,7 @@ function deserialize(buffer, filename, filesize)
 
 function serialize(filename)
 {
-    var network = {};
-    network["inputs"] = network_get_inputs();
-    network["outputs"] = network_get_outputs();
-    let layers = [];
-    for (var i=0; i<network_get_layers(); i++)
-    {
-        let layer = {};
-        layer["nodes"] = [];
-        let nodeCnt = network_get_nodes(i);
-        let nodes = [];
-        for (var j=0; j<nodeCnt; j++)
-        {
-            let biases = network_get_node_biases(i, j);
-            let weights = network_get_node_weights(i, j);
-            if (biases && weights)
-            {
-                let node = {};
-                node["biases"] = biases;
-                node["weights"] = weights;
-                nodes.push(node);
-            }
-            layer["nodes"].push(nodes);
-        }
-        layers.push(layer);
-    }
-    network["layers"] = layers;
+    var network = network_read_config();
 
     var measurement = {};
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <mutex>
 #include "NetworkLayer.h"
 
 class Network {
@@ -35,9 +36,16 @@ public:
     };
     void SetTrainingState(bool state) { m_isTraining = state; }
     bool IsTraining() { return m_isTraining; }
+    
+    void GetInputState(std::vector<double> &inputs);
+    void GetOutputState(int layerIx, std::vector<double> &outputs);
+    void GetBiasState(int layerIx, std::vector<double> &biases);
+    void GetWeightsState(int layerIx, std::vector<std::vector<double>> &weightsPerNode);
 
 private:
     int m_numInputs;
     std::vector<NetworkLayer>   m_layers;
     bool m_isTraining;
+    std::vector<double> stateInputs;
+    mutable std::mutex m_MeasureMutex;
 };

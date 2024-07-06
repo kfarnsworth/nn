@@ -34,7 +34,7 @@ std::string RestFull::RequestCallback(const std::string &request)
     response["result"] = err;
     response["error"] = errStr;
     response["info"] = info;
-    returnData["result"] = response;
+    returnData["response"] = response;
     return returnData.dump();
 }
 
@@ -54,7 +54,28 @@ void RestFull::Stop()
 int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr, 
     const nlohmann::json &data, nlohmann::json &info)
 {
-    if (!cmd.compare("getNetwork"))
+    if (!cmd.compare("getStatus"))
+    {
+        info["networkLoaded"] = m_network.LayerCount() > 0;
+        info["isTraining"] = m_network.IsTraining();
+        nlohmann::json inputs;
+        std::vector<double> networkInputs;
+        m_network.GetInputState(networkInputs);
+        info["inputs"] = networkInputs;
+        nlohmann::json activations;
+        for (int layerIx=0; layerIx<m_network.LayerCount(); layerIx++)
+        {
+            nlohmann::json activationLayer;
+            std::vector<double> layerActivations;
+            m_network.GetOutputState(layerIx, layerActivations);
+            activationLayer = layerActivations;
+            activations.push_back(activationLayer);
+        }
+        info["activations"] = activations;
+        errStr = "ok";
+        return 0;
+    }
+    else if (!cmd.compare("getNetwork"))
     {
         info["inputs"] = m_network.NumInputs();
         info["outputs"] = m_network.NumOutputs();
@@ -62,14 +83,26 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
         for (int layerIx=0; layerIx<m_network.LayerCount(); layerIx++)
         {
             nlohmann::json layer;
-            layer["nodes"] = m_network.GetNodeCount(layerIx);
+            nlohmann::json nodes;
+            nlohmann::json node;
+            std::vector<double> biases;
+            std::vector<std::vector<double>> weightsPerNode;
+            m_network.GetBiasState(layerIx, biases);
+            m_network.GetWeightsState(layerIx, weightsPerNode);
+            for (size_t nodeIx=0; nodeIx<biases.size(); nodeIx++)
+            {
+                node["bias"] = biases[nodeIx];
+                node["weights"] = weightsPerNode[nodeIx];
+                nodes.push_back(node);
+            }
+            layer["nodes"] = nodes;
             layers.push_back(layer);
         }
         info["layers"] = layers;
         errStr = "ok";
         return 0;
     }
-    if (!cmd.compare("setNetwork"))
+    else if (!cmd.compare("setNetwork"))
     {
         if (m_network.IsTraining())
         {
@@ -104,32 +137,68 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
             errStr = "no layers defined";
             return -1;
         }
-        m_network.Clear();
         for (size_t i=0; i<layers.size(); i++)
         {
             auto layer = layers[i];
-            if (!layer.contains("nodes") || !layer["nodes"].is_number() ||
-                !layer.contains("defaultBias") || !layer["defaultBias"].is_number())
+            if (!layer.contains("nodes") || !layer["nodes"].is_array())
             {
                 errStr = "invalid layer info";
                 return -1;
             }
-            int nodeCount = layer["nodes"];
-            int defaultBias = layer["defaultBias"];
-            m_network.Add(nodeCount, inputs, defaultBias);
-            inputs = nodeCount; // full mesh: outputs of previous layer is num inputs on next layer
+            auto nodes = layer["nodes"];
+            int prevNodeCnt = -1;
+            for (size_t j=0; j<nodes.size(); j++) 
+            {
+                auto node = nodes[j];
+                if (!node.contains("weights") || !node["weights"].is_array() ||
+                    !node.contains("bias") || !node["bias"].is_number())
+                {
+                    errStr = "invalid node info";
+                    return -1;
+                }
+                auto weights = node["weights"];
+                int numInputs = weights.size();
+                if (i == 0 && inputs != numInputs)
+                {
+                    errStr = "first node has non-matching input counts";
+                    return -1;
+                }
+                // full mesh: outputs of previous layer is num inputs on next layer
+                else if (j > 0 && prevNodeCnt != numInputs)
+                {
+                    errStr = "node input count not matching previous node count";
+                    return -1;
+                }
+                prevNodeCnt = numInputs;
+            }
+            if (i == layers.size() - 1 && outputs != (int)nodes.size())
+            {
+                errStr = "node count in last layer does not match outputs";
+                return -1;
+            }
         }
-        if (m_network.NumOutputs() != (size_t)outputs)
+        m_network.Clear();
+        int numInputs = inputs;
+        for (size_t i=0; i<layers.size(); i++)
         {
-            errStr = "warning: number of declared outputs does not equal numbers of nodes in last layer";
+            auto layer = layers[i];
+            auto nodes = layer["nodes"];
+            int numNodes = nodes.size();
+            m_network.Add(numNodes, numInputs);
+            numInputs = numNodes;
+            for (size_t j=0; j<nodes.size(); j++) 
+            {
+                auto node = nodes[j];
+                auto weights = node["weights"];
+                int bias = node["bias"];
+                m_network.SetNodeWeights(i, j, weights);
+                m_network.SetNodeBias(i, j, bias);
+            }
         }
-        else
-        {
-            errStr = "ok";
-        }
+        errStr = "ok";
         return 0;
     }
-    if (!cmd.compare("getMeasurement"))
+    else if (!cmd.compare("getMeasurement"))
     {
         if (m_network.IsTraining())
         {
