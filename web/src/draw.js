@@ -120,7 +120,7 @@ function draw_canvas_height()
     return Math.ceil(draw_page_height() * PIXELS_PERINCH * zoom);
 }
 
-function draw_input_box(ctx, xPos, yPos)
+function draw_input_box(ctx, xPos, yPos, num)
 {
     var zoom_draw = draw_zoom_scale();
     var xPosPixels = draw_inches_to_pixels(xPos);
@@ -132,6 +132,17 @@ function draw_input_box(ctx, xPos, yPos)
     ctx.beginPath();
     ctx.rect(xPoint, yPoint, wPixels, hPixels);
     ctx.stroke();
+    let str = num.toString();
+    let metrics = ctx.measureText(str);
+    let textWidth = metrics.width;
+    let textHeight = Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+    xPoint += (draw_inches_to_pixels(DRAW_INPUT_BOX_SIZE) - textWidth) / 2;
+    yPoint += draw_inches_to_pixels(DRAW_INPUT_BOX_SIZE); // bottom left corner for fillText
+    yPoint -= (draw_inches_to_pixels(DRAW_INPUT_BOX_SIZE) - textHeight) / 2; // center against box
+    ctx.font = 400 + " " + 10 + "pt " + "Times New Roman";
+    ctx.fillStyle = "black";
+    ctx.strokeStyle = "black";
+    ctx.fillText(str , xPoint, yPoint);
 }
 
 function draw_continued_dot(ctx, xPos, yPos)
@@ -202,7 +213,7 @@ function draw_node_circle(ctx, xPos, yPos, nodeInputCnt)
     }
 }
 
-function draw_output_box(ctx, xPos, yPos)
+function draw_output_box(ctx, xPos, yPos, num)
 {
     var zoom_draw = draw_zoom_scale();
     var xPosPixels = draw_inches_to_pixels(xPos);
@@ -214,6 +225,17 @@ function draw_output_box(ctx, xPos, yPos)
     ctx.beginPath();
     ctx.rect(xPoint, yPoint, wPixels, hPixels);
     ctx.stroke();
+    let str = num.toString();
+    let metrics = ctx.measureText(str);
+    let textWidth = metrics.width;
+    let textHeight = Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+    xPoint += (draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE) - textWidth) / 2;
+    yPoint += draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE); // bottom left corner for fillText
+    yPoint -= (draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE) - textHeight) / 2; // center against box
+    ctx.font = 400 + " " + 10 + "pt " + "Times New Roman";
+    ctx.fillStyle = "black";
+    ctx.strokeStyle = "black";
+    ctx.fillText(str , xPoint, yPoint);
     draw_connect_line(ctx, xPos - DRAW_COLUMN_PACING + DRAW_OUTPUT_BOX_SIZE, 
                     yPos + 0.1, xPos, yPos + 0.1);
 }
@@ -250,7 +272,7 @@ function draw_redraw()
     if (inputCnt > DRAW_MAX_PER_COLUMN)
         inputCnt = DRAW_START_COUNT;
     for (var i=0; i<inputCnt; i++) {
-        draw_input_box(ctx, xPos, yPos);
+        draw_input_box(ctx, xPos, yPos, i);
         yPos += DRAW_ROW_PACING;
     }
     if (network_get_inputs() > inputCnt)
@@ -263,7 +285,7 @@ function draw_redraw()
         }
         yPos += 0.1;
         for (var i=network_get_inputs()-DRAW_STOP_COUNT; i<network_get_inputs(); i++) {
-            draw_input_box(ctx, xPos, yPos);
+            draw_input_box(ctx, xPos, yPos, i);
             yPos += DRAW_ROW_PACING;
         }
     }
@@ -306,7 +328,7 @@ function draw_redraw()
     if (outputCnt > DRAW_MAX_PER_COLUMN)
         outputCnt = DRAW_START_COUNT;
     for (var i=0; i<outputCnt; i++) {
-        draw_output_box(ctx, xPos, yPos);
+        draw_output_box(ctx, xPos, yPos, i);
         yPos += DRAW_ROW_PACING;
     }
     if (network_get_outputs() > outputCnt)
@@ -319,7 +341,7 @@ function draw_redraw()
         }
         yPos += 0.1;
         for (var i=network_get_outputs()-DRAW_STOP_COUNT; i<network_get_outputs(); i++) {
-            draw_output_box(ctx, xPos, yPos);
+            draw_output_box(ctx, xPos, yPos, i);
             yPos += DRAW_ROW_PACING;
         }
     }

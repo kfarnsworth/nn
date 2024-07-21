@@ -7,9 +7,9 @@ class DataSet {
 public:
     DataSet() {};
     ~DataSet() {};
-    
+
     DataSet(std::vector<double> &in, std::vector<double> &out)
-    { 
+    {
         input = in;
         output = out;
     }
@@ -27,8 +27,10 @@ public:
     size_t GetInputCount() { return inputCount; };
     size_t GetOutputCount() { return outputCount; };
     bool GetDataSet(int index, DataSet &set);
-    void Clear() { dataSets.clear(); outputSet.clear(); dataEntries=0; };
+    void Clear() { dataSets.clear(); outputSet.clear(); dataEntries=0; dataFh.close(); };
     bool IsEmpty() { return dataEntries == 0; }
+    static void TrainingDataFiles(std::vector<std::string> &list, const std::string dir=DEFAULT_TRAINING_DIRECTORY);
+    static const char *TrainingDirectory() { return DEFAULT_TRAINING_DIRECTORY; };
 
 private:
     std::string dirPrefix;
@@ -43,6 +45,8 @@ private:
     size_t outputCount;
     std::vector<std::string> outputSet;
     std::vector<DataSet> dataSets;
+
+    static constexpr char DEFAULT_TRAINING_DIRECTORY[] = "training";
 
     bool ParseDataInput(std::string inputStr, std::vector<double> &input);
     bool ParseDataInput(std::vector<unsigned char> inputBytes, std::vector<double> &input);

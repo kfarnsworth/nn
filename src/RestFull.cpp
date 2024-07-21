@@ -1,8 +1,8 @@
 #include <exception>
 #include "RestFull.h"
 
-RestFull::RestFull(Network &network)
-    : m_network(network), m_httpConnection("/nn", REST_PORT)
+RestFull::RestFull(Network &network, TrainingData &trainingData)
+    : m_network(network), m_trainingData(trainingData), m_httpConnection("/nn", REST_PORT)
 {
 }
 
@@ -51,7 +51,7 @@ void RestFull::Stop()
     m_httpConnection.Stop();
 }
 
-int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr, 
+int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
     const nlohmann::json &data, nlohmann::json &info)
 {
     if (!cmd.compare("getStatus"))
@@ -72,11 +72,52 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
             activations.push_back(activationLayer);
         }
         info["activations"] = activations;
+        std::vector<std::string> trainingFiles;
+        TrainingData::TrainingDataFiles(trainingFiles);
+        info["trainingFiles"] = trainingFiles;
+        std::vector<std::string> trainingTypes;
+        Training::TrainingDataTypes(trainingTypes);
+        info["trainingTypes"] = trainingTypes;
+        std::vector<std::string> networkFiles;
+        Network::NetworkFiles(networkFiles);
+        info["networkFiles"] = networkFiles;
         errStr = "ok";
         return 0;
     }
-    else if (!cmd.compare("getNetwork"))
+    if (!cmd.compare("getNetwork") || !cmd.compare("loadNetwork"))
     {
+        if (!cmd.compare("loadNetwork"))
+        {
+            if (!data.is_object())
+            {
+                errStr = "data object is missing";
+                return -1;
+            }
+            if (!data.contains("filename") || !data["filename"].is_string())
+            {
+                errStr = "filename missing";
+                return -1;
+            }
+            std::string loadFileName(Network::NetworkDirectory());
+            loadFileName += "/";
+            loadFileName += data["filename"];
+            std::ifstream fs(loadFileName, std::ifstream::in);
+            if (!fs.is_open())
+            {
+                errStr = "filename can't be opened";
+                return -1;
+            }
+            m_network.LoadNetwork(fs);
+            fs.close();
+        }
+        else
+        {
+            if (m_network.LayerCount() == 0)
+            {
+                errStr = "network not set";
+                return -1;
+            }
+        }
         info["inputs"] = m_network.NumInputs();
         info["outputs"] = m_network.NumOutputs();
         nlohmann::json layers;
@@ -102,7 +143,46 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
         errStr = "ok";
         return 0;
     }
-    else if (!cmd.compare("setNetwork"))
+    if (!cmd.compare("saveNetwork"))
+    {
+        if (m_network.LayerCount() == 0)
+        {
+            errStr = "network is empty";
+            return -1;
+        }
+        if (!data.is_object())
+        {
+            errStr = "data object is missing";
+            return -1;
+        }
+        if (!data.contains("filename") || !data["filename"].is_string())
+        {
+            errStr = "filename missing";
+            return -1;
+        }
+        std::string saveFileName(data["filename"]);
+        if (saveFileName.empty())
+        {
+            errStr = "filename invalid";
+            return -1;
+        }
+        if (saveFileName.size() < 6 ||
+            saveFileName.substr(saveFileName.size()-5).compare(".json") != 0)
+        {
+            saveFileName += ".json";
+        }
+        saveFileName.insert(0, "/");
+        saveFileName.insert(0, Network::NetworkDirectory());
+        std::ofstream fs(saveFileName, std::ofstream::out);
+        if (fs.is_open())
+        {
+            m_network.SaveNetwork(fs);
+            fs.close();
+        }
+        errStr = "ok";
+        return 0;
+    }
+    if (!cmd.compare("setNetwork"))
     {
         if (m_network.IsTraining())
         {
@@ -147,7 +227,7 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
             }
             auto nodes = layer["nodes"];
             int prevNodeCnt = -1;
-            for (size_t j=0; j<nodes.size(); j++) 
+            for (size_t j=0; j<nodes.size(); j++)
             {
                 auto node = nodes[j];
                 if (!node.contains("weights") || !node["weights"].is_array() ||
@@ -186,7 +266,7 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
             int numNodes = nodes.size();
             m_network.Add(numNodes, numInputs);
             numInputs = numNodes;
-            for (size_t j=0; j<nodes.size(); j++) 
+            for (size_t j=0; j<nodes.size(); j++)
             {
                 auto node = nodes[j];
                 auto weights = node["weights"];
@@ -198,7 +278,7 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
         errStr = "ok";
         return 0;
     }
-    else if (!cmd.compare("getMeasurement"))
+    if (!cmd.compare("getMeasurement"))
     {
         if (m_network.IsTraining())
         {
@@ -249,8 +329,117 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
         errStr = "ok";
         return 0;
     }
+    if (!cmd.compare("startTraining"))
+    {
+        if (m_network.IsTraining())
+        {
+            errStr = "Network already training!";
+            return -1;
+        }
+        if (!data.is_object())
+        {
+            errStr = "data object is missing";
+            return -1;
+        }
+        if (!data.contains("filename") || !data["filename"].is_string())
+        {
+            errStr = "filename missing or invalid";
+            return -1;
+        }
+        std::string trainingFileName(data["filename"]);
+        if (trainingFileName.size() < 6 ||
+            trainingFileName.substr(trainingFileName.size()-5).compare(".json") != 0)
+        {
+            trainingFileName += ".json";
+        }
+        trainingFileName.insert(0, "/");
+        trainingFileName.insert(0, TrainingData::TrainingDirectory());
+        if (m_trainingData.OpenData(trainingFileName))
+        {
+            if (m_trainingData.GetInputCount() != m_network.NumInputs() ||
+                m_trainingData.GetOutputCount() != m_network.NumOutputs())
+            {
+                errStr = "Training data set does not match network!";
+                return -1;
+            }
+        }
+        else
+        {
+            errStr = "Unable to load training data";
+            return -1;
+        }
+        if (!data.contains("type") || !data["type"].is_string())
+        {
+            errStr = "type missing or invalid";
+            return -1;
+        }
+        auto type = data["type"];
+        if (!data.contains("rate") || !data["rate"].is_number())
+        {
+            errStr = "rate missing or invalid";
+            return -1;
+        }
+        auto rate = data["rate"];
+        if (!data.contains("batchSize") || !data["batchSize"].is_number())
+        {
+            errStr = "batchSize missing or invalid";
+            return -1;
+        }
+        auto batchSize = data["batchSize"];
+        if (!data.contains("batchCount") || !data["batchCount"].is_number())
+        {
+            errStr = "batchCount missing or invalid";
+            return -1;
+        }
+        auto batchCount = data["batchCount"];
+        if (!data.contains("outputType") || !data["outputType"].is_number())
+        {
+            errStr = "outputType missing or invalid";
+            return -1;
+        }
+        auto outputType = data["outputType"];
+        m_trainer = Training::GetTrainer(m_network);
+        m_trainer->SetLearningRate(rate);
+        m_trainer->Train(m_trainingData, batchSize, batchCount, outputType);
+        errStr = "traning started";
+        return 0;
+    }
+    if (!cmd.compare("stopTraining"))
+    {
+        if (!m_network.IsTraining())
+        {
+            errStr = "Network is not training!";
+            return -1;
+        }
+        m_trainer->Stop();
+        errStr = "Training stopped";
+        return 0;
+    }
+    if (!cmd.compare("getTrainingState"))
+    {
+        info["isTraining"] = m_network.IsTraining();
+        std::vector<double> networkInputs;
+        m_network.GetInputState(networkInputs);
+        info["inputs"] = networkInputs;
+        nlohmann::json activations;
+        for (int layerIx=0; layerIx<m_network.LayerCount(); layerIx++)
+        {
+            nlohmann::json activationLayer;
+            std::vector<double> layerActivations;
+            m_network.GetOutputState(layerIx, layerActivations);
+            activationLayer = layerActivations;
+            activations.push_back(activationLayer);
+        }
+        info["activations"] = activations;
+        int batchCount, batchTotal, totalTime;
+        m_trainer->TrainingProgress(batchCount, batchTotal, totalTime);
+        info["batchCount"] = batchCount;
+        info["batchTotal"] = batchTotal;
+        info["totalTime"] = totalTime;
+        errStr = "ok";
+        return 0;
+    }
     errStr = "Unknown command";
     return -1;
 
 }
-

@@ -21,6 +21,8 @@ public:
     virtual double GetLearningRate() { return 0; }
     void Stop() { StopThread(); }
     void WaitComplete();
+    static void TrainingDataTypes(std::vector<std::string> &list);
+    void TrainingProgress(int &batchCount, int &batchTotal, int &totalTime);
 
 protected:
     virtual void TrainBatch(Network &network, std::vector<DataSet> &batchDataSet) = 0;
@@ -40,4 +42,5 @@ private:
     int m_numBatches;
     int m_trainingOutputIndex;
     int m_batchCount;
+    int m_totalTimeSecs;
 };

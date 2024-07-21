@@ -29,6 +29,19 @@ std::shared_ptr<Training> Training::GetTrainer(Network &network, std::string typ
     return nullptr;
 }
 
+void Training::TrainingDataTypes(std::vector<std::string> &list)
+{
+    list.clear();
+    list.push_back("SGD");
+}
+
+void Training::TrainingProgress(int &batchCount, int &batchTotal, int &totalTime)
+{
+    batchCount = m_batchCount;
+    batchTotal = m_numBatches;
+    totalTime = m_totalTimeSecs;
+}
+
 void Training::WaitComplete()
 {
     m_trainingThread.join();
@@ -74,10 +87,10 @@ void Training::TrainingThread(void *data)
 {
     TrainingData *t = (TrainingData *)data;
 
-    int m_batchCount = 0;
+    m_batchCount = 0;
     int setCount = 0;
     std::vector<DataSet> dataSets;
-    bool m_complete = false;
+    m_complete = false;
     std::time_t startTime = std::time(nullptr);
 
     dataSets.resize(m_batchSize);
@@ -100,7 +113,7 @@ void Training::TrainingThread(void *data)
                 std::cerr << "ERROR: training data input" << std::endl;
                 m_complete = true;
                 break;
-            }            
+            }
         }
     }
 
@@ -110,7 +123,7 @@ void Training::TrainingThread(void *data)
         {
             setCount = 0;
             while (setCount < m_batchSize)
-            {   
+            {
                 if (!t->GetNextDataSet(dataSets[setCount], m_trainingOutputIndex))
                 {
                     if (!t->GetFirstDataSet(dataSets[setCount], m_trainingOutputIndex))
@@ -127,6 +140,7 @@ void Training::TrainingThread(void *data)
         TrainBatch(m_network, dataSets);
 
         m_batchCount++;
+        m_totalTimeSecs = std::time(nullptr) - startTime;
 
         if (m_numBatches != 0)
         {
@@ -143,7 +157,6 @@ void Training::TrainingThread(void *data)
     }
 
     std::cout << std::endl;
-    std::time_t endTime = std::time(nullptr);
-    std::cout << "Completed in " << endTime - startTime << " secs" << std::endl;
+    std::cout << "Completed in " << m_totalTimeSecs << " secs" << std::endl;
     m_network.SetTrainingState(false);
 }

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 #include <stb/stb_image.h>
 #include "TrainingData.h"
 #include "json.hpp"
@@ -35,7 +36,7 @@ bool TrainingData::GetNextDataSet(DataSet &set, int outIx)
     {
         char *buf = new char[dataEntrySize];
         bool getNext = false;
-        do 
+        do
         {
             dataFh.read(buf, dataEntrySize);
             if (outIx >= 0)
@@ -68,7 +69,7 @@ bool TrainingData::GetNextDataSet(DataSet &set, int outIx)
     else
     {
         bool getNext = false;
-        do 
+        do
         {
             set = dataSets[setIndex];
             if (outIx >= 0)
@@ -137,7 +138,7 @@ bool TrainingData::OpenData(const std::string filename)
         nlohmann::json trainingInfo = nlohmann::json::parse(fs);
         inputCount = trainingInfo["inputs"];
         outputCount = trainingInfo["outputs"];
-        auto input_params = trainingInfo["input_params"]; 
+        auto input_params = trainingInfo["input_params"];
         auto output_params = trainingInfo["output_params"];
         inputType = input_params["type"];
         if (inputType == "image")
@@ -155,6 +156,8 @@ bool TrainingData::OpenData(const std::string filename)
             dataFilename = input_params["file"];
             if (!dirPrefix.empty())
                 dataFilename = dirPrefix + "/" + dataFilename;
+            if (dataFh.is_open())
+                dataFh.close();
             dataFh.open(dataFilename, std::ifstream::in | std::ifstream::binary);
             if (!dataFh.is_open())
             {
@@ -162,10 +165,16 @@ bool TrainingData::OpenData(const std::string filename)
                 return false;
             }
             dataFh.seekg (0, dataFh.end);
-            size_t dataSize = dataFh.tellg();
+            int fileSize = dataFh.tellg();
+            if (fileSize <= 0)
+            {
+                std::cerr << "Invalid size for binary file: '" << dataFilename << "': " << fileSize << std::endl;
+                dataFh.close();
+                return false;
+            }
             dataFh.seekg (0, dataFh.beg);
             dataEntrySize = inputCount + 1;
-            dataEntries = dataSize / dataEntrySize;
+            dataEntries = (size_t)fileSize / dataEntrySize;
         }
         else
         {
@@ -312,4 +321,16 @@ bool TrainingData::ParseDataOutput(unsigned char byte, std::vector<double> &outp
     }
     std::cerr << "Output data set does not contain: '" << byteStr << "'" << std::endl;
     return false;
+}
+
+void TrainingData::TrainingDataFiles(std::vector<std::string> &list, const std::string dir)
+{
+    list.clear();
+    for (const auto & file : std::filesystem::directory_iterator(dir))
+    {
+        if (file.path().extension() == ".json")
+        {
+            list.push_back(file.path().filename());
+        }
+    }
 }

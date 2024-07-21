@@ -64,7 +64,7 @@ static bool load_training(std::string trainingFileName)
 
 static void show_usage(const char *s)
 {
-    std::cerr << "Usage: " << s << " <neural-network-config> [options]" << std::endl;
+    std::cerr << "Usage: " << s << " [<neural-network-config>] [options]" << std::endl;
     std::cerr << "  <neural-network-config> - network configuration (required)" << std::endl;
     std::cerr << "  options:" << std::endl;
     std::cerr << "    -t|--training <training-file> - training file input" << std::endl;
@@ -194,25 +194,28 @@ int main(int argc, const char *argv[])
         }
         i++;
     }
-    if (failout || configFilename.empty())
+    if (failout)
     {
         show_usage(argv[0]);
         exit(1);
     }
 
-    std::ifstream fs(configFilename, std::ifstream::in);
-    if (!fs.is_open())
+    if (!configFilename.empty())
     {
-        std::cerr << "Can't open config file " << configFilename << std::endl;
-        exit(2);
-    }
-    network.CreateNetwork(fs);
-    fs.close();
+        std::ifstream fs(configFilename, std::ifstream::in);
+        if (!fs.is_open())
+        {
+            std::cerr << "Can't open config file " << configFilename << std::endl;
+            exit(2);
+        }
+        network.CreateNetwork(fs);
+        fs.close();
 
-    if (network.LayerCount() == 0)
-    {
-        std::cerr << "Error reading config file " << configFilename << std::endl;
-        exit(3);
+        if (network.LayerCount() == 0)
+        {
+            std::cerr << "Error reading config file " << configFilename << std::endl;
+            exit(3);
+        }
     }
 
     if (!trainingFilename.empty())
@@ -220,7 +223,7 @@ int main(int argc, const char *argv[])
         load_training(trainingFilename);
     }
 
-    RestFull rf(network);
+    RestFull rf(network, trainingData);
     rf.Start();
 
     if (startTraining && !trainingData.IsEmpty())

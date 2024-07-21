@@ -20,10 +20,11 @@
     <script src="src/file.js"></script>
     <script src="src/connection.js"></script>
     <script src="src/measurement.js"></script>
+    <script src="src/training.js"></script>
   </head>
   <style>
-    html { 
-      font-size: 0.875rem; 
+    html {
+      font-size: 0.875rem;
     }
     body {
       padding: 1rem;
@@ -58,6 +59,9 @@
     }
     .select-box {
       max-width: 30%;
+    }
+    .select-box-wide {
+      max-width: 55%;
     }
     .font-size-box {
       max-width: 90%;
@@ -112,6 +116,23 @@
     .dropdown-submenu {
       margin-left: 24px;
     }
+    .text-blink {
+      color: red;
+      font-size: 1rem;
+      animation: blink 1.5s infinite;
+      animation-fill-mode: both;
+    }
+    .text-counter {
+      color: black;
+      margin: 0rem;
+      font-size: 0.7rem;
+      white-space: pre;
+    }
+    @keyframes blink {
+      0% { opacity: 0 }
+      50% { opacity: 1 }
+      100% { opacity: 0 }
+    }
    </style>
    <body>
     <div class="container-fluid">
@@ -153,19 +174,30 @@
         <!-- Connection -->
         <div class="col-1 mb-2">
           <div class="input-group input-group-sm">
-            <button type="button" class="btn btn-primary btn-md row-button" id="host-connect-button">Connect</button>
+            <button type="button" class="btn btn-primary btn-md row-buttons" id="host-connect-button">Connect</button>
           </div>
         </div>
         <!-- Get Network -->
         <div class="col-1 mb-2">
           <div class="input-group input-group-sm">
-            <button type="button" class="btn btn-primary btn-md row-button" id="get-network-button" disabled>GetNetwork</button>
+            <button type="button" class="btn btn-primary btn-md row-buttons" id="get-network-button" disabled>GetNetwork</button>
           </div>
         </div>
         <!-- Set Network -->
         <div class="col-1 mb-2">
           <div class="input-group input-group-sm">
-            <button type="button" class="btn btn-primary btn-md row-button" id="set-network-button" disabled>SetNetwork</button>
+            <button type="button" class="btn btn-primary btn-md row-buttons" id="set-network-button" disabled>SetNetwork</button>
+          </div>
+        </div>
+        <!-- Save Network -->
+        <div class="col-1 mb-2">
+          <div class="input-group input-group-sm">
+            <button type="button" class="btn btn-primary btn-md row-buttons" id="save-network-button" disabled>SaveNetwork</button>
+          </div>
+        </div>
+        <div class="col-2 mb-2">
+          <div id="training-indicator" hidden>
+            <p class="text-blink pl-2 my-1">TRAINING</p>
           </div>
         </div>
       </div>
@@ -177,6 +209,15 @@
               <h7 class="card-header">Neural Network Settings</h7>
               <div class="card-body">
                 <form class="network-params">
+                  <div class="row">
+                    <div class="col-sm-8 small-padding">
+                      <select class="custom-select head-param" size="1" id="networkFile">
+                      </select>
+                   </div>
+                   <div class="col-sm-4 small-padding">
+                      <button type="button" class="btn btn-info btn-md row-buttons" id="load-network-button">Load</button>
+                    </div>
+                  </div>
                   <div class="row">
                     <div class="input-group mb-1 input-group-sm">
                       <div class="input-group-prepend">
@@ -213,7 +254,7 @@
                       <div class="input-group-prepend">
                         <span class="input-group-text input-label" id="nodes-label">Nodes:</span>
                       </div>
-                      <input type="number" class="form-control input-box layer-param" min="1" id="layerNodes">
+                      <input type="number" class="form-control input-box layer-param" min="1" id="layerNodes" disabled>
                     </div>
                   </div>
                   <div class="row">
@@ -221,7 +262,7 @@
                       <div class="input-group-prepend">
                         <span class="input-group-text input-label" id="defaultBias-label">DefBias:</span>
                       </div>
-                      <input type="number" class="form-control input-box float-number layer-param" min=-10.0 step="0.10" max=10.0 id="layerDefaultBias">
+                      <input type="number" class="form-control input-box float-number layer-param" min=-10.0 step="0.10" max=10.0 id="layerDefaultBias" disabled>
                     </div>
                   </div>
                 </form>
@@ -278,10 +319,18 @@
                   <div class="row">
                     <div class="input-group mb-1 input-group-sm">
                       <div class="input-group-prepend">
+                        <span class="input-group-text input-label"  id="trainingFile-label">File:</span>
+                      </div>
+                      <select class="custom-select select-box-wide head-param" size="1" id="trainingFile">
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="input-group mb-1 input-group-sm">
+                      <div class="input-group-prepend">
                         <span class="input-group-text input-label"  id="trainingType-label">Type:</span>
                       </div>
-                      <select class="custom-select select-box head-param" size="1" id=trainingType">
-                        <option value="0">SGD</option>
+                      <select class="custom-select select-box-wide head-param" size="1" id="trainingType">
                       </select>
                     </div>
                   </div>
@@ -290,7 +339,7 @@
                       <div class="input-group-prepend">
                         <span class="input-group-text input-label" id="xposNumber-label">Learn Rate:</span>
                       </div>
-                      <input type="number" class="form-control input-box float-number head-param" min=1.0 step="0.1" max=10.0 id="learningRate">
+                      <input type="number" class="form-control input-box float-number head-param" min=1.0 step="0.1" max=10.0 value=3.0 id="learningRate">
                     </div>
                   </div>
                   <div class="row">
@@ -298,7 +347,7 @@
                       <div class="input-group-prepend">
                         <span class="input-group-text input-label" id="batchSize-label">Batch Size:</span>
                       </div>
-                      <input type="number" class="form-control input-box train-param" min="1" id="batchSize">
+                      <input type="number" class="form-control input-box train-param" min="1" value=30 id="batchSize">
                     </div>
                   </div>
                   <div class="row">
@@ -306,7 +355,7 @@
                       <div class="input-group-prepend">
                         <span class="input-group-text input-label" id="batchCount-label">Batch Count:</span>
                       </div>
-                      <input type="number" class="form-control input-box train-param" min="1" id="batchCount">
+                      <input type="number" class="form-control input-box train-param" min="1" value=100 id="batchCount">
                     </div>
                   </div>
                   <div class="row">
@@ -320,7 +369,16 @@
                     </div>
                   </div>
                   <div class="row">
-                    <button type="button" class="btn btn-info btn-md row-buttons" id="training-button">Start Training</button>
+                    <div class="col-6">
+                      <button type="button" class="btn btn-success btn-md row-buttons" id="training-button" disabled>Start Training</button>
+                    </div>
+                    <div class="col-6">
+                      <div class="row">
+                        <div id="training-batch-status" hidden>
+                          <p class="text-counter">Batch 0 or 0</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </form>
               </div>
@@ -367,7 +425,7 @@
         <div class="modal-content">
           <!-- Modal Header -->
           <div class="modal-header">
-            <h4 class="modal-title">Download</h4>
+            <h4 class="modal-title">Save Network</h4>
           </div>
           <!-- Modal body -->
           <div class="modal-body">
@@ -379,7 +437,7 @@
                 </div>
               </div>
               <div class="row">
-                <input type="submit" class="btn btn-success row-buttons" value="Download" id="filename-download-button">
+                <input type="submit" class="btn btn-success row-buttons" value="Save" id="filename-save-button">
               </div>
             </form>
           </div>
@@ -452,10 +510,21 @@
       $('#version-string').html("Version " + VERSION_MAJOR + "." + VERSION_MINOR + "." + VERSION_MAINT);
       network_init();
       $('#zoom-box').val("1.00");
-      $('#filename-download-button').click(function() {
+      var localSave = false;
+      $('#filename-save-button').click(function() {
         var filename = $("#filename-entered").val();
         $("#filename-modal").modal('hide');
-        file_save_now(filename);
+        if (localSave) {
+            file_save_now(filename);
+        } else {
+            connection_set_network(function(status) {
+                if (status) {
+                    connection_save_network(filename, function(status) {
+                        if (!status) console.log("UNABLE TO SAVE TO FILENAME '" + filename + "'");
+                    });
+                }
+            });
+        }
       });
 
       $('.input-box').on('keypress', function(event) {
@@ -472,7 +541,8 @@
       });
       $('.input-box').on("input", function(event) {
           if ($(this).hasClass('network-param')) {
-            network_parameter_change(this.id);
+            var all_selected = $("#layer-list :selected").map((_, e) => e.value).get();
+            network_parameter_change(all_selected, this.id);
           }
           else if ($(this).hasClass('train-param')) {
             network_training_change(this.id);
@@ -519,24 +589,73 @@
       });
 
       $('#host-connect-button').click(function() {
-          var host = $('#host-connection').val()
           $("#host-connect-button").prop('disabled', true);
+          $("#load-network-button").prop('disabled', true);
           $("#get-network-button").prop('disabled', true);
           $("#set-network-button").prop('disabled', true);
-          connection_connect(host, function(status) {
+          $("#save-network-button").prop('disabled', true);
+          $("#training-button").prop('disabled', true);
+          connection_connect(function(status, info) {
             console.log(status);
-            $("#host-connect-button").prop('disabled', status);
+            $("#host-connect-button").prop('disabled', false);
+            $("#load-network-button").prop('disabled', !status);
             $("#get-network-button").prop('disabled', !status);
             $("#set-network-button").prop('disabled', !status);
+            $("#save-network-button").prop('disabled', !status);
+            $("#training-button").prop('disabled', !status);
+            if (status)
+            {
+              training_set_state(info.isTraining);
+              training_set_files(info.trainingFiles);
+              training_set_types(info.trainingTypes);
+              network_set_files(info.networkFiles);
+            }
+          });
+      });
+
+      $('#load-network-button').click(function() {
+          var filename = $( "#networkFile option:selected" ).text();
+          connection_load_network(filename, function(status, info) {
+              console.log(status);
+              if (status)
+              {
+                  if (info.hasOwnProperty("inputs") && info.inputs > 0 &&
+                      info.hasOwnProperty("outputs") && info.outputs > 0 &&
+                      info.hasOwnProperty("layers") && info.layers.length > 0)
+                  {
+                    network_save_config(info);
+                    training_set_outputs(network_get_outputs());
+                  }
+                  else {
+                    console.log("BAD NETWORK DATA");
+                  }
+              }
           });
       });
 
       $('#get-network-button').click(function() {
-          connection_get_network();
+          connection_get_network(function(status, info) {
+              console.log(status);
+              if (status)
+              {
+                  network_save_config(info);
+                  training_set_outputs(network_get_outputs());
+              }
+          });
       });
 
       $('#set-network-button').click(function() {
-          connection_set_network();
+          connection_set_network(function(status) {
+              if (!status) {
+                // TBD put in alert
+              }
+          });
+      });
+
+      $('#save-network-button').click(function() {
+          localSave = false;
+          $("#filename-entered").val("my-network");
+          $('#filename-modal').modal('show');
       });
 
       $('#add-button').click(function() {
@@ -554,10 +673,10 @@
       $('#zoom-out').click(function() {
           draw_zoom(false);
       });
-      
+
       $('#measure-button').click(function() {
         $("#measure-button").prop('disabled', true);
-          connection_get_measurement(function(info) {
+          connection_get_measurement(measurement_get_input(), function(info) {
               console.log(info);
               $("#measure-button").prop('disabled', false);
               network_set_output_values(info.output);
@@ -568,6 +687,10 @@
           measurement_clear();
       });
 
+      $('#training-button').click(function() {
+          training_toggle();
+      });
+
       $('#file-menu').on('click', 'a', function () {
           var item = $(this).text();
           if (item.startsWith("New")) {
@@ -575,14 +698,16 @@
           } else if (item.startsWith("Open")) {
             network_check_changes(file_open_modal, "Open");
           } else if (item.startsWith("Save As")) {
+            localSave = true;
             file_network_saveas();
           } else if (item.startsWith("Save")) {
+            localSave = true;
             file_network_save();
           } else if (item == "About") {
             $("#about-modal").modal('show');
           }
       });
-      
+
       $('#view-menu').on('click', 'a', function () {
           var item = $(this).text();
           if (item == "Zoom In") {

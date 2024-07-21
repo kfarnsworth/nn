@@ -28,6 +28,22 @@
                 }
             ],
             "preLaunchTask": "build"
+        },
+        {
+            "name": "Neural Network No Args",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/nn",
+            "cwd": "${workspaceFolder}",
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build"
         }
     ]
 }

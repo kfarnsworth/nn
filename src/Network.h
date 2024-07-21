@@ -41,6 +41,8 @@ public:
     void GetOutputState(int layerIx, std::vector<double> &outputs);
     void GetBiasState(int layerIx, std::vector<double> &biases);
     void GetWeightsState(int layerIx, std::vector<std::vector<double>> &weightsPerNode);
+    static void NetworkFiles(std::vector<std::string> &list, const std::string dir=DEFAULT_NETWORK_DIRECTORY);
+    static const char *NetworkDirectory() { return DEFAULT_NETWORK_DIRECTORY; };
 
 private:
     int m_numInputs;
@@ -48,4 +50,5 @@ private:
     bool m_isTraining;
     std::vector<double> stateInputs;
     mutable std::mutex m_MeasureMutex;
+    static constexpr char DEFAULT_NETWORK_DIRECTORY[] = "networks";
 };

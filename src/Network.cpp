@@ -199,3 +199,15 @@ void Network::GetWeightsState(int layerIx, std::vector<std::vector<double>> &wei
         weightsPerNode.push_back(weights);
     }
 }
+
+void Network::NetworkFiles(std::vector<std::string> &list, const std::string dir)
+{
+    list.clear();
+    for (const auto & file : std::filesystem::directory_iterator(dir))
+    {
+        if (file.path().extension() == ".json")
+        {
+            list.push_back(file.path().filename());
+        }
+    }
+}

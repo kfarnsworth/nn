@@ -50,7 +50,7 @@ function network_new()
             node.weights.push(network_get_random_weight(DEFAULT_INPUTS));
         }
         layer.nodes.push( node );
-    
+
     }
     layerList.push(layer);
     network_update();
@@ -242,7 +242,7 @@ function network_copy_layers()
     layerCopiesList = $("#layer-list :selected").map((_, e) => e.value).get();
     if (layerCopiesList.length > 0)
         $('#paste-menu-item').removeClass('disabled');
-}  
+}
 
 function network_paste_layers()
 {
@@ -286,15 +286,40 @@ function network_alert(head_text, body_text)
     $("#alert-modal").modal('show');
 }
 
-function network_parameter_change(param_id)
+function network_parameter_change(layersSelected, param_id)
 {
     let change = false;
+    let lastSelected = false;
+    layersSelected.forEach(function(idStr) {
+        selected = parseInt(idStr) - 1;
+        if (selected == layerList.length-1)
+            lastSelected = true;
+    });
     if (param_id == "networkInputs")
     {
         let inputCount = parseInt($('#networkInputs').val());
         if (!Number.isNaN(inputCount) && layerList.length > 0)
         {
             layerList[0].inputs = inputCount;
+            var layer = layerList[0];
+            for (var i=0; i<layer.nodes.length; i++)
+            {
+                let node = layer.nodes[i];
+                if (node.weights.length > inputCount)
+                {
+                    while (node.weights.length > inputCount)
+                    {
+                        node.weights.pop();
+                    }
+                }
+                else if (node.weights.length < inputCount)
+                {
+                    while (node.weights.length < inputCount)
+                    {
+                        node.weights.push(network_get_random_weight(inputCount));
+                    }
+                }
+            }
             change = true;
         }
     }
@@ -310,15 +335,20 @@ function network_parameter_change(param_id)
             else if (layerList[layerList.length-1].nodes.length < outputCount)
             {
                 let node = structuredClone(nodeInfo);
-                let nodeInputCnt = (layerList.length == 0) ? layerList[0].inputs : 
+                let nodeInputCnt = (layerList.length == 0) ? layerList[0].inputs :
                                     layerList[layerList.length-1].nodes.length;
-                node.bias = DEFAULT_BIAS;
+                let biasStr = $('#layerDefaultBias').val();
+                let biasValue = parseFloat(biasStr);
+                node.bias = biasValue;
                 for (var j=0; j<nodeInputCnt; j++)
                 {
                     node.weights.push(network_get_random_weight(nodeInputCnt));
                 }
                 layerList[layerList.length-1].nodes.push(node);
+
             }
+            if (lastSelected)
+                $('#layerNodes').val(outputCount);
             change = true;
         }
     }
@@ -363,7 +393,7 @@ function network_save_config(network)
     }
     $('#layerNodes').val(network_get_nodes(0));
     $('#layerDefaultBias').val(layerList[0].def_bias);
-    
+
 }
 
 function network_read_config()
@@ -418,20 +448,43 @@ function network_layer_change(allLayers, id)
             let layerIx = selectedLayers[i];
             var layer = layerList[layerIx];
             if (nodesInt < layer.nodes.length) {
-                layer.nodes.pop();
+                while (nodesInt < layer.nodes.length)
+                {
+                    layer.nodes.pop();
+                }
             }
-            else {
-                let node = structuredClone(nodeInfo);
-                node.bias = layer.def_bias;
-                node.weights.push(network_get_random_weight(layer.inputs));
-                layer.nodes.push(node);
+            else if (nodesInt > layer.nodes.length)
+            {
+                while (nodesInt > layer.nodes.length)
+                {
+                    let node = structuredClone(nodeInfo);
+                    node.bias = layer.def_bias;
+                    for (var j=0; j<layer.inputs; j++)
+                    {
+                        node.weights.push(network_get_random_weight(layer.inputs));
+                    }
+                    layer.nodes.push(node);
+                }
             }
+            if (layerIx == layerList.length-1)
+                $('#networkOutputs').val(layer.nodes.length);
+            change = true;
         }
-        change = true;
     }
     else if (id == "layerDefaultBias")
     {
-
+        let biasStr = $('#layerDefaultBias').val();
+        let biasValue = parseFloat(biasStr);
+        for (var i=0; i<selectedLayers.length; i++)
+        {
+            let layerIx = selectedLayers[i];
+            var layer = layerList[layerIx];
+            layer.def_bias = biasValue;
+            for (var j=0; j<layer.nodes.length; j++)
+            {
+                layer.nodes[j].bias = layer.def_bias;
+            }
+        }
     }
     if (change)
     {
@@ -450,6 +503,8 @@ function network_layer_update(selected_layers)
     if (selected_layers.length == 0) {
         $('#layerDefaultBias').val("");
         $('#layerNodes').val("");
+        $('#layerDefaultBias').prop('disabled', true);
+        $('#layerNodes').prop('disabled', true);
     }
     else {
         var first_layer_bias = false;
@@ -510,5 +565,18 @@ function network_set_input_values(inputs)
     for(let i=0; i< maxInputs; i++)
     {
         draw_set_input(i, inputs[i] / 255);
+    }
+}
+
+function network_set_files(networkFiles)
+{
+    var length = $('#networkFile option').length;
+    for (var i=1; i<=length; i++)
+        $('#networkFile').children("option[value=" + i + "]").remove();
+    var optValue = 1;
+    for(var file of networkFiles)
+    {
+        $('#networkFile').append(`<option value="${optValue}">${file}</option>`);
+        optValue++;
     }
 }

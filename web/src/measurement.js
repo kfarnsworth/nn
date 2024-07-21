@@ -12,6 +12,9 @@ const MEASURE_HEIGHT_INCHES = 1;
 var pixels = [];
 var sideLen = 0;
 var numPixels = 0;
+var pixWidth = 0;
+var pixHeight = 0;
+const invertedPic = true;
 
 function measurement_set_inputs(numInputs)
 {
@@ -34,9 +37,9 @@ function measurement_set_inputs(numInputs)
     var canvasAppoxHeight = Math.ceil(MEASURE_HEIGHT_INCHES * MEASURE_PIXELS_PERINCH);
     canvasWidth = Math.ceil(canvasAppoxWidth / sideLen) * sideLen;
     canvasHeight = Math.ceil(canvasAppoxHeight / sideLen) * sideLen;
-    if (canvasWidth > drawarea.offsetWidth) 
+    if (canvasWidth > drawarea.offsetWidth)
         canvasWidth = Math.floor(canvasAppoxWidth / sideLen) * sideLen;
-    if (canvasHeight > drawarea.offsetHeight) 
+    if (canvasHeight > drawarea.offsetHeight)
         canvasHeight = Math.floor(canvasAppoxHeight / sideLen) * sideLen;
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
@@ -44,7 +47,9 @@ function measurement_set_inputs(numInputs)
     canvas.style.position = "absolute";
     canvas.style.border = "none";
     drawarea.appendChild(canvas);
-    
+    pixWidth = Math.floor(canvasWidth / sideLen);
+    pixHeight = Math.floor(canvasHeight / sideLen);
+
     pixels = [];
     for (var i=0; i<numPixels; i++)
     {
@@ -56,29 +61,47 @@ function measurement_set_inputs(numInputs)
 
 function measurement_draw()
 {
-    var pixWidth = Math.floor(drawcanvasChild.width / sideLen);
-    var pixHeight = Math.floor(drawcanvasChild.height / sideLen);
-    var ctx = drawcanvasChild.getContext('2d');
     for (var row=0; row<sideLen; row++)
     {
         for (var col=0; col<sideLen; col++)
         {
-            measurement_draw_pixel(row * pixWidth, col * pixHeight, 255 - pixels[row * sideLen + col]);
+            measurement_set_pixel(row, col, 255 - measurement_get_pixel_value(row,col));
         }
     }
 }
 
-function measurement_update_pixel(row, col, value)
+function measurement_set_pixel_value(row, col, value)
 {
-    pixels[row * sideLen + col] = value;
+    var index;
+    if (invertedPic)
+    {
+        index = col * sideLen + row;
+    }
+    else
+    {
+        index = row * sideLen + col;
+    }
+    pixels[index] = value;
+}
+
+function measurement_get_pixel_value(row, col)
+{
+    var index;
+    if (invertedPic)
+    {
+        index = col * sideLen + row;
+    }
+    else
+    {
+        index = row * sideLen + col;
+    }
+    return pixels[index];
 }
 
 var pixLastDrawX = -1;
 var pixLastDrawY = -1;
 function measurement_draw_pixel(X, Y, C)
 {
-    var pixWidth = Math.floor(drawcanvasChild.width / sideLen);
-    var pixHeight = Math.floor(drawcanvasChild.height / sideLen);
     var pixLocX = X - (X % pixWidth);
     var pixLocY = Y - (Y % pixHeight);
     var ctx = drawcanvasChild.getContext('2d');
@@ -86,11 +109,16 @@ function measurement_draw_pixel(X, Y, C)
     ctx.strokeStyle = `rgb(${C}, ${C}, ${C})`;
     ctx.lineWidth = "1";
     ctx.fillRect(pixLocX, pixLocY, pixWidth, pixHeight);
-    measurement_update_pixel(Math.floor(pixLocX/pixWidth), Math.floor(pixLocY/pixHeight), 255 - C);
     var newPix =  pixLocX != pixLastDrawX || pixLocY != pixLastDrawY;
     pixLastDrawX = pixLocX;
     pixLastDrawY = pixLocY;
     return newPix;
+}
+
+function measurement_set_pixel(X, Y, C)
+{
+    measurement_draw_pixel(X * pixWidth, Y * pixHeight, C);
+    measurement_set_pixel_value(X, Y, 255 - C);
 }
 
 function measurement_clear()
@@ -113,13 +141,22 @@ function measurement_get_input()
     return data;
 }
 
+function measurement_draw_inputs(inputs)
+{
+    for (var i=0; i<inputs.length && i<numPixels; i++)
+    {
+        pixels[i] = Math.floor(255 * inputs[i]);
+    }
+    measurement_draw();
+}
+
 //=======================================================================
 var pressed = false;
 var mouseXloc = 0;
 var mouseYloc = 0;
 const COLOR_GREY_LIGHTEST = 220;
 const COLOR_GREY_DARKEST = 0;
-const COLOR_GREY_INCR = 15;
+const COLOR_GREY_INCR = 100;
 var mouseColor = COLOR_GREY_LIGHTEST;
 
 function measurement_mouse_down(mouseX, mouseY)
@@ -145,6 +182,7 @@ function measurement_mouse_move(deltaX, deltaY)
         mouseXloc += deltaX;
         mouseYloc += deltaY;
         //console.log("MOVE " + mouseXloc + ":" + mouseYloc + ":" +  mouseColor);
+        measurement_set_pixel_value(Math.floor(mouseXloc / sideLen), Math.floor(mouseYloc / sideLen), 255 - mouseColor);
         if (measurement_draw_pixel(mouseXloc, mouseYloc, mouseColor) == true)
         {
             mouseColor = COLOR_GREY_LIGHTEST;
@@ -160,7 +198,7 @@ function measurement_mouse_move(deltaX, deltaY)
 
 function measurement_mouse_out()
 {
-    console.log("OUT ");
+    //console.log("OUT ");
     pressed = false;
     mouseColor = COLOR_GREY_LIGHTEST;
     network_set_input_values(pixels);
