@@ -5,9 +5,9 @@
 
 static httplib::Server m_server;
 
-HttpConnection::HttpConnection(std::string path, uint16_t port) : m_port(port), m_handler(nullptr)
+HttpConnection::HttpConnection(const char *path, uint16_t port) : m_port(port), m_handler(nullptr)
 {
-    m_server.Post(path.c_str(), [&](const httplib::Request& req, httplib::Response& res) {
+    m_server.Post(path, [&](const httplib::Request& req, httplib::Response& res) {
         if (m_handler != nullptr)
         {
             std::string responseStr = m_handler(req.body);
