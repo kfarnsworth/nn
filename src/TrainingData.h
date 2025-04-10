@@ -31,6 +31,7 @@ public:
     bool IsEmpty() { return dataEntries == 0; }
     static void TrainingDataFiles(std::vector<std::string> &list, const std::string dir=DEFAULT_TRAINING_DIRECTORY);
     static const char *TrainingDirectory() { return DEFAULT_TRAINING_DIRECTORY; };
+    std::string GetTrainingFilename() { return m_trainingFilename; }
 
 private:
     std::string dirPrefix;
@@ -45,6 +46,7 @@ private:
     size_t outputCount;
     std::vector<std::string> outputSet;
     std::vector<DataSet> dataSets;
+    std::string m_trainingFilename;
 
     static constexpr char DEFAULT_TRAINING_DIRECTORY[] = "training";
 

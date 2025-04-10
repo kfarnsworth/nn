@@ -11,6 +11,7 @@ function training_toggle()
         var trainingFile = $( "#trainingFile option:selected" ).text();
         var trainingType = $( "#trainingType option:selected" ).text();
         var trainingRate = Number.parseFloat($('#learningRate').val());
+        var trainingMomentum = Number.parseFloat($('#momentum').val());
         var batchSize = Number.parseInt($('#batchSize').val());
         var batchCount = Number.parseInt($('#batchCount').val());
         var outputType = -1;
@@ -22,13 +23,14 @@ function training_toggle()
             "filename": trainingFile,
             "type": trainingType,
             "rate": trainingRate,
+            "momentum": trainingMomentum,
             "batchSize": batchSize,
             "batchCount": batchCount,
             "outputType": outputType
         }
         connection_start_training(obj, function(status) {
             if (status) {
-                training_set_state(true);
+                training_update_display(true);
                 setTimeout(training_update_state, 100);
             }
         });
@@ -36,7 +38,7 @@ function training_toggle()
     else
     {
         connection_stop_training(function(status) {
-            training_set_state(false);
+            training_update_display(false);
         });
     }
 }
@@ -47,7 +49,7 @@ function training_update_state()
         if (status) {
             if (trainingActive != info.isTraining)
             {
-                training_set_state(info.isTraining);
+                training_update_display(info.isTraining);
                 if (!info.isTraining)
                     setTimeout(training_update_state, 300); // one last status update
             }
@@ -65,7 +67,7 @@ function training_update_state()
     });
 }
 
-function training_set_state(isTraining)
+function training_update_display(isTraining)
 {
     trainingActive = isTraining;
     if (isTraining)
@@ -82,6 +84,16 @@ function training_set_state(isTraining)
         $('#training-button').removeClass("btn-danger");
         $('#training-button').addClass("btn-success");
         $('#training-indicator').prop('hidden', true);
+    }
+}
+
+function training_set_state(isTraining)
+{
+    var thinksItsTraining = trainingActive;
+    training_update_display(isTraining);
+    if (!thinksItsTraining && isTraining)
+    {
+        setTimeout(training_update_state, 0);
     }
 }
 
@@ -109,6 +121,22 @@ function training_set_types(trainingTypes)
         $('#trainingType').append(`<option value="${optValue}">${type}</option>`);
         optValue++;
     }
+}
+
+function training_set_settings(trainingSettings)
+{
+    $('#learningRate').val(trainingSettings.rate);
+    $('#momentum').val(trainingSettings.momentum);
+    $('#batchSize').val(trainingSettings.batchSize);
+    $('#batchCount').val(trainingSettings.batchCount);
+    $("#trainingFile option").each(function() {
+        if ($(this).text() == trainingSettings.file)
+            $(this).attr('selected', 'selected');
+    });
+    $("#trainingType option").each(function() {
+        if ($(this).text() == trainingSettings.type)
+            $(this).attr('selected', 'selected');
+    });
 }
 
 function training_set_outputs(numOuputs)

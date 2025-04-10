@@ -3,7 +3,7 @@
 
 Network::Network() : m_numInputs(0), m_isTraining(false)
 {
-    
+
 }
 
 Network::~Network()
@@ -53,8 +53,8 @@ void Network::SaveNetwork(std::ofstream &fs)
         layers.push_back(layer);
     }
     data["layers"] = layers;
-    fs << std::setw(4) << data << std::endl
-;}
+    fs << std::setw(4) << data << std::endl;
+}
 
 void Network::LoadNetwork(std::ifstream &fs)
 {
@@ -194,7 +194,7 @@ void Network::GetWeightsState(int layerIx, std::vector<std::vector<double>> &wei
     int nodeCount = GetNodeCount(layerIx);
     for (int nodeIx=0; nodeIx<nodeCount; nodeIx++)
     {
-        std::vector<double> weights; 
+        std::vector<double> weights;
         GetNodeWeights(layerIx, nodeIx, weights);
         weightsPerNode.push_back(weights);
     }

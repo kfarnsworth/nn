@@ -345,6 +345,14 @@
                   <div class="row">
                     <div class="input-group mb-1 input-group-sm">
                       <div class="input-group-prepend">
+                        <span class="input-group-text input-label" id="xposNumber-label">Momentum:</span>
+                      </div>
+                      <input type="number" class="form-control input-box float-number head-param" min=0.0 step="0.1" max=1.0 value=0.9 id="momentum">
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="input-group mb-1 input-group-sm">
+                      <div class="input-group-prepend">
                         <span class="input-group-text input-label" id="batchSize-label">Batch Size:</span>
                       </div>
                       <input type="number" class="form-control input-box train-param" min="1" value=30 id="batchSize">
@@ -608,6 +616,7 @@
               training_set_state(info.isTraining);
               training_set_files(info.trainingFiles);
               training_set_types(info.trainingTypes);
+              training_set_settings(info.trainingSettings);
               network_set_files(info.networkFiles);
             }
           });
@@ -635,7 +644,6 @@
 
       $('#get-network-button').click(function() {
           connection_get_network(function(status, info) {
-              console.log(status);
               if (status)
               {
                   network_save_config(info);

@@ -467,7 +467,33 @@ function network_layer_change(allLayers, id)
                 }
             }
             if (layerIx == layerList.length-1)
+            {
                 $('#networkOutputs').val(layer.nodes.length);
+            }
+            else
+            {
+                nextLayer = layerList[layerIx+1];
+                nextLayer.inputs = layer.nodes.length;
+                for (var j=0; j<nextLayer.nodes.length; j++)
+                {
+                    let node = nextLayer.nodes[j];
+                    if (node.weights.length > nextLayer.inputs)
+                    {
+                        while (node.weights.length > nextLayer.inputs)
+                        {
+                            node.weights.pop();
+                        }
+                    }
+                    else if (node.weights.length < nextLayer.inputs)
+                    {
+                        while (node.weights.length < nextLayer.inputs)
+                        {
+                            node.weights.push(network_get_random_weight(nextLayer.inputs));
+                            node.bias = nextLayer.def_bias;
+                        }
+                    }
+                }
+            }
             change = true;
         }
     }

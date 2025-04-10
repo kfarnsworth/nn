@@ -210,10 +210,15 @@ bool TrainingData::OpenData(const std::string filename)
             dataEntries = dataSets.size();
         }
         std::cout << "Training Data Loaded:" << std::endl;
+        std::cout << "       File: " << filename << std::endl;
         std::cout << "       Type: " << inputType << std::endl;
         std::cout << "    Samples: " << dataEntries << std::endl;
         std::cout << "     Inputs: " << inputCount << std::endl;
         std::cout << "    Outputs: " << outputCount << std::endl;
+        if (pos == std::string::npos)
+            m_trainingFilename = filename;
+        else
+            m_trainingFilename = filename.substr(pos+1);
         return true;
     }
     else

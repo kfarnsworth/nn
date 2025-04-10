@@ -8,18 +8,15 @@
 class StochasticGradientDecent : public Training
 {
 public:
-    StochasticGradientDecent(Network &network, double learningRate=3.0);
+    StochasticGradientDecent(Network &network);
     ~StochasticGradientDecent();
-    void SetLearningRate(double learningRate) { m_learningRate = learningRate; }
-    double GetLearningRate() { return m_learningRate; }
+    std::string GetType() { return "SGD"; }
 
 protected:
     void TrainBatch(Network &network, std::vector<DataSet> &batchDataSet);
 
 private:
-    void BackPropagate(Network &network, DataSet &dataSet, 
+    void BackPropagate(Network &network, DataSet &dataSet,
         std::vector<std::vector<double>> &gradBias,
         std::vector<std::vector<std::vector<double>>> &gradWeights);
-
-    double m_learningRate;
 };

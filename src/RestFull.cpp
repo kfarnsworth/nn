@@ -2,7 +2,8 @@
 #include "RestFull.h"
 
 RestFull::RestFull(Network &network, TrainingData &trainingData)
-    : m_network(network), m_trainingData(trainingData), m_httpConnection("/nn", REST_PORT)
+    : m_network(network), m_trainingData(trainingData),
+      m_trainer(nullptr), m_httpConnection("/nn", REST_PORT)
 {
 }
 
@@ -81,6 +82,14 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
         std::vector<std::string> networkFiles;
         Network::NetworkFiles(networkFiles);
         info["networkFiles"] = networkFiles;
+        nlohmann::json trainingSettings;
+        trainingSettings["file"] = m_trainingData.GetTrainingFilename();
+        trainingSettings["type"] = m_trainer ? m_trainer->GetType() : "";
+        trainingSettings["rate"] = m_trainer ? m_trainer->GetLearningRate() : Training::LEARNING_RATE_DEFAULT;
+        trainingSettings["momentum"] = m_trainer ? m_trainer->GetMomentum() : Training::MOMENTUM_DEFAULT;
+        trainingSettings["batchSize"] = m_trainer ? m_trainer->GetBatchSize() : Training::BATCH_SIZE_DEFAULT;
+        trainingSettings["batchCount"] = m_trainer ? m_trainer->GetBatchCount() : Training::BATCH_COUNT_DEFAULT;
+        info["trainingSettings"] = trainingSettings;
         errStr = "ok";
         return 0;
     }
@@ -380,6 +389,12 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
             return -1;
         }
         auto rate = data["rate"];
+        if (!data.contains("momentum") || !data["momentum"].is_number())
+        {
+            errStr = "momentum missing or invalid";
+            return -1;
+        }
+        auto momentum = data["momentum"];
         if (!data.contains("batchSize") || !data["batchSize"].is_number())
         {
             errStr = "batchSize missing or invalid";
@@ -398,8 +413,9 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
             return -1;
         }
         auto outputType = data["outputType"];
-        m_trainer = Training::GetTrainer(m_network);
+        m_trainer = Training::GetTrainer(m_network, type);
         m_trainer->SetLearningRate(rate);
+        m_trainer->SetMomentum(momentum);
         m_trainer->Train(m_trainingData, batchSize, batchCount, outputType);
         errStr = "traning started";
         return 0;

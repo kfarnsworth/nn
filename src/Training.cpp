@@ -6,7 +6,11 @@
 
 std::map<std::string, std::shared_ptr<Training>> Training::m_trainers;
 
-Training::Training(Network &network) : m_network(network)
+Training::Training(Network &network) : m_learningRate(LEARNING_RATE_DEFAULT),
+                                       m_momentum(MOMENTUM_DEFAULT),
+                                       m_network(network),
+                                       m_batchSize(BATCH_SIZE_DEFAULT),
+                                       m_numBatches(BATCH_COUNT_DEFAULT)
 {
 
 }
