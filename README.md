@@ -22,7 +22,7 @@ sudo apt install build-essential libstb-dev
 ```
 - For nginx you should be able to just add this:
 ```
-location /nn {
+location /nn/ {
 		proxy_pass http://127.0.0.1:4569/nn;
 	}
 ```
@@ -30,11 +30,11 @@ location /nn {
 - Add the directory `web` as site you can hit for your http server.
 
 ### Traning data files
-There is a large MNIST number training binary file called out in `training/mnist-training-binary.json`. The binary file it huge and is located here: <to add web link to binary files>.
+There is a large MNIST number training binary file called out in `training/mnist-training-binary.json.
 
 ##Usage
 - Run this in a window: `./bin/nn`
-- From browser go to `http://<your-site>/nn`
+- From browser go to `http://<your-site>/nnweb`
 
 ##Config Network
 

@@ -4,7 +4,7 @@
 
 var hostIsConnected = false;
 var hostNetworkLoaded = false;
-var hostUrl = "/nn";
+var hostUrl = "/nn/";
 
 function connection_connect(func)
 {
