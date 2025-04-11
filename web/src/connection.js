@@ -8,7 +8,7 @@ var hostUrl = "/nn/";
 
 function connection_connect(func)
 {
-    connection_get_status(func);
+    connection_send_rest("getStatus", {}, connection_get_status_response, func);
 }
 
 function connection_get_status_response(response, func)
@@ -147,6 +147,15 @@ function connection_get_training_state(func)
 }
 
 function connection_send_command(cmd, data, respFunc, userFunc)
+{
+    if (!hostIsConnected) {
+        respFunc({ result:-1, error:'not connected to host'}, userFunc);
+        return;
+    }
+    connection_send_rest(cmd, data, respFunc, userFunc);
+}
+
+function connection_send_rest(cmd, data, respFunc, userFunc)
 {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {

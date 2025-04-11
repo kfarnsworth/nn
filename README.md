@@ -28,22 +28,26 @@ location /nn/ {
 ```
 
 - Add the directory `web` as site you can hit for your http server.
+- Quick Test of proxy: 
+    - start nn
+	- execute this: `curl -H 'Content-Type: application/json' -d '{"cmd":"TESTING"}' -X POST http://127.0.0.1/nn/`
+	- Should return this error: `{"cmd":"TESTING","response":{"error":"Unknown command","info":null,"result":-1}}`
 
 ### Traning data files
 There is a large MNIST number training binary file called out in `training/mnist-training-binary.json.
 
-##Usage
+## Usage
 - Run this in a window: `./bin/nn`
 - From browser go to `http://<your-site>/nnweb`
 
-##Config Network
+## Config Network
 
-#Measure
+# Measure
 
-##Load Network
+## Load Network
 
-##Save Network
+## Save Network
 
-##Load Training
+## Load Training
 
-##Train
+## Train

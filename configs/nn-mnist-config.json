@@ -3,11 +3,15 @@
     "layers": [
         {
             "nodes": 32,
-            "bias": -1 
+            "bias": -1
+        },
+        {
+            "nodes": 32,
+            "bias": -1
         },
         {
             "nodes": 10,
-            "bias": -1 
+            "bias": -1
         }
     ]
 }
