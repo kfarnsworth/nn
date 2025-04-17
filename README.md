@@ -40,6 +40,15 @@ There is a large MNIST number training binary file called out in `training/mnist
 - Run this in a window: `./bin/nn`
 - From browser go to `http://<your-site>/nnweb`
 
+- For start training example:
+```
+    ./bin/nn configs/nn-mnist-config.json \
+    -t training/mnist-training-binary.json \
+    -b 30 \
+    -n 1000 \
+    -r 3.0 \
+    -s
+```
 ## Config Network
 
 # Measure

@@ -95,7 +95,6 @@ void Training::TrainingThread(void *data)
     int setCount = 0;
     std::vector<DataSet> dataSets;
     m_complete = false;
-    std::time_t startTime = std::time(nullptr);
 
     dataSets.resize(m_batchSize);
     if (!m_testTraining)
@@ -121,8 +120,10 @@ void Training::TrainingThread(void *data)
         }
     }
 
+    m_totalTimeSecs = 0;
     while (!m_complete)
     {
+        StartTimer();
         if (!m_testTraining)
         {
             setCount = 0;
@@ -144,7 +145,8 @@ void Training::TrainingThread(void *data)
         TrainBatch(m_network, dataSets);
 
         m_batchCount++;
-        m_totalTimeSecs = std::time(nullptr) - startTime;
+        StopTimer();
+        m_totalTimeSecs = (int)(GetTotalTimeMsecs() / 1000);
 
         if (m_numBatches != 0)
         {
@@ -161,6 +163,7 @@ void Training::TrainingThread(void *data)
     }
 
     std::cout << std::endl;
-    std::cout << "Completed in " << m_totalTimeSecs << " secs" << std::endl;
+    std::cout << "Completed in " << std::fixed << std::setprecision(3) << GetTotalTimeMsecs()/1000.0 << " secs" << std::endl;
+    m_network.DumpNetworkStats();
     m_network.SetTrainingState(false);
 }

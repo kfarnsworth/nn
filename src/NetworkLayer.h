@@ -2,8 +2,9 @@
 
 #include <vector>
 #include "NetworkNode.h"
+#include "Stats.hpp"
 
-class NetworkLayer {
+class NetworkLayer : public Stats {
 
 public:
     NetworkLayer(size_t numNodes, size_t numInputs, double bias);
@@ -21,6 +22,10 @@ public:
     void Measure(std::vector<NetworkNode> &inputNodes);
     int NumNodes() { return m_nodes.size(); };
     int NumInputs() { return m_numInputs; };
+    void DumpLayerStats(size_t ix) {
+        std::cout << "Layer " << ix << std::endl;
+        DumpStats();
+    }
 
     std::vector<double> m_outputs;
     std::vector<double> m_outputDerivatives;

@@ -1,5 +1,6 @@
 
 #include "NetworkNode.h"
+#include <numeric>
 
 NetworkNode::NetworkNode(const std::vector<double> &weights, double bias)
 {
@@ -10,13 +11,15 @@ NetworkNode::NetworkNode(const std::vector<double> &weights, double bias)
     m_activation = 0;
 }
 
-NetworkNode::~NetworkNode() 
-{   
+NetworkNode::~NetworkNode()
+{
 }
 
 double NetworkNode::Measure(const std::vector<double> &inputs)
 {
     if (inputs.size() != m_weights.size()) throw std::runtime_error("weights and inputs not same size");
+    // get dot product of weight and inputs
+    //double total = std::inner_product(m_weights.begin(), m_weights.end(), inputs.begin(), 0.0);
     double total = 0.0;
     for (size_t i=0; i<inputs.size(); i++)
     {

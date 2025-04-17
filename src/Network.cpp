@@ -145,6 +145,7 @@ std::vector<double> &Network::GetOutputDerivatives(int layerIx)
 void Network::Measure(const std::vector<double> &inputs)
 {
     std::unique_lock<std::mutex> lock(m_MeasureMutex);
+    StartTimer();
     std::vector<double> lastInputs = inputs;
     for (size_t i = 0; i<m_layers.size(); i++)
     {
@@ -152,6 +153,7 @@ void Network::Measure(const std::vector<double> &inputs)
         lastInputs = m_layers[i].GetOutputs();
     }
     stateInputs = inputs;
+    StopTimer();
 }
 
 std::vector<double> &Network::GetOutputs()

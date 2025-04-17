@@ -3,10 +3,12 @@
 #include <map>
 #include <memory>
 #include <thread>
+#include <chrono>
 #include "Network.h"
 #include "TrainingData.h"
+#include "Stats.hpp"
 
-class Training {
+class Training : public Stats {
 
 public:
     static std::shared_ptr<Training> GetTrainer(Network &network, std::string type="SGD");
@@ -39,6 +41,7 @@ protected:
 
     double m_learningRate;
     double m_momentum;
+
 
 private:
     static std::map<std::string, std::shared_ptr<Training>> m_trainers;

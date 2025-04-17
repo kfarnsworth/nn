@@ -3,8 +3,9 @@
 #include <fstream>
 #include <mutex>
 #include "NetworkLayer.h"
+#include "Stats.hpp"
 
-class Network {
+class Network : public Stats {
 public:
     Network();
     virtual ~Network();
@@ -30,19 +31,25 @@ public:
     };
     size_t NumOutputs()
     {
-        if (LayerCount()>0) 
+        if (LayerCount()>0)
             return m_layers.back().NumNodes();
         return 0;
     };
     void SetTrainingState(bool state) { m_isTraining = state; }
     bool IsTraining() { return m_isTraining; }
-    
+
     void GetInputState(std::vector<double> &inputs);
     void GetOutputState(int layerIx, std::vector<double> &outputs);
     void GetBiasState(int layerIx, std::vector<double> &biases);
     void GetWeightsState(int layerIx, std::vector<std::vector<double>> &weightsPerNode);
     static void NetworkFiles(std::vector<std::string> &list, const std::string dir=DEFAULT_NETWORK_DIRECTORY);
     static const char *NetworkDirectory() { return DEFAULT_NETWORK_DIRECTORY; };
+    void DumpNetworkStats() {
+        std::cout << "Network Stats:" << std::endl;
+        DumpStats();
+        for (size_t i=0; i<m_layers.size(); i++)
+            m_layers[i].DumpLayerStats(i);
+    }
 
 private:
     int m_numInputs;

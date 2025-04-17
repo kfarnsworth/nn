@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/bin/nn",
             "args": [
-                "configs/nn-digits.json",
+                "configs/nn-mnist-config.json",
                 "-t","training/mnist-training-binary.json",
                 "-b","30",
                 "-n","100",

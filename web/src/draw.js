@@ -127,22 +127,23 @@ function draw_input_box(ctx, xPos, yPos, num)
     var yPosPixels = draw_inches_to_pixels(yPos);
     var xPoint = Math.ceil(xPosPixels * zoom_draw);
     var yPoint = Math.ceil(yPosPixels * zoom_draw);
-    var hPixels = draw_inches_to_pixels(0.2 * zoom_draw);
-    var wPixels = draw_inches_to_pixels(0.2 * zoom_draw);
+    var hPixels = draw_inches_to_pixels(DRAW_INPUT_BOX_SIZE * zoom_draw);
+    var wPixels = draw_inches_to_pixels(DRAW_INPUT_BOX_SIZE * zoom_draw);
     ctx.beginPath();
     ctx.rect(xPoint, yPoint, wPixels, hPixels);
     ctx.stroke();
+
     let str = num.toString();
     let metrics = ctx.measureText(str);
     let textWidth = metrics.width;
     let textHeight = Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
-    xPoint += (draw_inches_to_pixels(DRAW_INPUT_BOX_SIZE) - textWidth) / 2;
-    yPoint += draw_inches_to_pixels(DRAW_INPUT_BOX_SIZE); // bottom left corner for fillText
-    yPoint -= (draw_inches_to_pixels(DRAW_INPUT_BOX_SIZE) - textHeight) / 2; // center against box
+    xPoint += (wPixels - textWidth) / 2;
+    yPoint += hPixels; // bottom left corner for fillText
+    yPoint -= (hPixels - textHeight) / 2; // center against box
     ctx.font = 400 + " " + 10 + "pt " + "Times New Roman";
     ctx.fillStyle = "black";
     ctx.strokeStyle = "black";
-    ctx.fillText(str , xPoint, yPoint);
+    ctx.fillText(str, xPoint, yPoint);
 }
 
 function draw_continued_dot(ctx, xPos, yPos)
@@ -177,7 +178,7 @@ function draw_connect_line(ctx, xPosStart, yPosStart, xPosEnd, yPosEnd)
     ctx.stroke();
 }
 
-function draw_node_circle(ctx, xPos, yPos, nodeInputCnt)
+function draw_node_circle(ctx, xPos, yPos, nodeInputCnt, num)
 {
     var zoom_draw = draw_zoom_scale();
     var xPosPixels = draw_inches_to_pixels(xPos + DRAW_NODE_CIRCLE_SIZE/2);
@@ -190,6 +191,17 @@ function draw_node_circle(ctx, xPos, yPos, nodeInputCnt)
     ctx.arc(xPoint, yPoint, radius, 0, 2 * Math.PI);
     ctx.stroke();
 
+    let str = num.toString();
+    let metrics = ctx.measureText(str);
+    let textWidth = metrics.width;
+    let textHeight = Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+    xPoint -= textWidth / 2;
+    yPoint += (draw_inches_to_pixels(DRAW_NODE_CIRCLE_SIZE) - textHeight) / 2; // center against box
+    ctx.font = 400 + " " + 10 + "pt " + "Times New Roman";
+    ctx.fillStyle = "black";
+    ctx.strokeStyle = "black";
+    ctx.fillText(str, xPoint, yPoint);
+
     var inputs = nodeInputCnt;
     if (inputs > DRAW_START_COUNT)
         inputs = DRAW_START_COUNT;
@@ -200,7 +212,7 @@ function draw_node_circle(ctx, xPos, yPos, nodeInputCnt)
     for (i=0; i<inputs; i++)
     {
         draw_connect_line(ctx, xPosInput, yPosInput, xPosNode, yPosNode);
-        yPosInput += DRAW_ROW_PACING; 
+        yPosInput += DRAW_ROW_PACING;
     }
     if (inputs < nodeInputCnt)
     {
@@ -220,8 +232,8 @@ function draw_output_box(ctx, xPos, yPos, num)
     var yPosPixels = draw_inches_to_pixels(yPos);
     var xPoint = Math.ceil(xPosPixels * zoom_draw);
     var yPoint = Math.ceil(yPosPixels * zoom_draw);
-    var hPixels = draw_inches_to_pixels(0.2 * zoom_draw);
-    var wPixels = draw_inches_to_pixels(0.2 * zoom_draw);
+    var hPixels = draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE * zoom_draw);
+    var wPixels = draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE * zoom_draw);
     ctx.beginPath();
     ctx.rect(xPoint, yPoint, wPixels, hPixels);
     ctx.stroke();
@@ -229,14 +241,14 @@ function draw_output_box(ctx, xPos, yPos, num)
     let metrics = ctx.measureText(str);
     let textWidth = metrics.width;
     let textHeight = Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
-    xPoint += (draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE) - textWidth) / 2;
-    yPoint += draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE); // bottom left corner for fillText
-    yPoint -= (draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE) - textHeight) / 2; // center against box
+    xPoint += (wPixels - textWidth) / 2;
+    yPoint += hPixels; // bottom left corner for fillText
+    yPoint -= (hPixels - textHeight) / 2; // center against box
     ctx.font = 400 + " " + 10 + "pt " + "Times New Roman";
     ctx.fillStyle = "black";
     ctx.strokeStyle = "black";
     ctx.fillText(str , xPoint, yPoint);
-    draw_connect_line(ctx, xPos - DRAW_COLUMN_PACING + DRAW_OUTPUT_BOX_SIZE, 
+    draw_connect_line(ctx, xPos - DRAW_COLUMN_PACING + DRAW_OUTPUT_BOX_SIZE,
                     yPos + 0.1, xPos, yPos + 0.1);
 }
 
@@ -300,7 +312,7 @@ function draw_redraw()
         if (nodeCnt > DRAW_MAX_PER_COLUMN)
             nodeCnt = DRAW_START_COUNT;
         for (var j=0; j<nodeCnt; j++) {
-            draw_node_circle(ctx, xPos, yPos, nodeInputCnt);
+            draw_node_circle(ctx, xPos, yPos, nodeInputCnt, j);
             yPos += DRAW_ROW_PACING;
         }
         if (network_get_nodes(i) > nodeCnt)
@@ -313,7 +325,7 @@ function draw_redraw()
             }
             yPos += 0.1;
             for (var j=network_get_nodes(i)-DRAW_STOP_COUNT; j<network_get_nodes(i); j++) {
-                draw_node_circle(ctx, xPos, yPos, nodeInputCnt);
+                draw_node_circle(ctx, xPos, yPos, nodeInputCnt, j);
                 yPos += DRAW_ROW_PACING;
             }
         }
@@ -355,7 +367,7 @@ function draw_set_output(outIndex, value)
     if (network_get_outputs() > DRAW_MAX_PER_COLUMN)
         lastOutputIndex = DRAW_START_COUNT;
     if (outIndex < lastOutputIndex)
-        yPos += outIndex * DRAW_ROW_PACING; 
+        yPos += outIndex * DRAW_ROW_PACING;
     else if (outIndex >= network_get_outputs() - DRAW_STOP_COUNT)
         yPos += ((DRAW_STOP_COUNT - (network_get_outputs() - outIndex)) * DRAW_ROW_PACING) + ((DRAW_START_COUNT + 3) * DRAW_ROW_PACING) + 0.2;
     else
@@ -396,7 +408,7 @@ function draw_set_input(inIndex, value)
     if (network_get_inputs() > DRAW_MAX_PER_COLUMN)
         lastInputIndex = DRAW_START_COUNT;
     if (inIndex < lastInputIndex)
-        yPos += inIndex * DRAW_ROW_PACING; 
+        yPos += inIndex * DRAW_ROW_PACING;
     else if (inIndex >= network_get_inputs() - DRAW_STOP_COUNT)
         yPos += ((DRAW_STOP_COUNT - (network_get_inputs() - inIndex)) * DRAW_ROW_PACING) + ((DRAW_START_COUNT + 3) * DRAW_ROW_PACING) + 0.2;
     else

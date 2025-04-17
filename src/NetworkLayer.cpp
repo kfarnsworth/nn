@@ -1,6 +1,7 @@
 #include <iostream>
 #include <random>
 #include "NetworkLayer.h"
+#include "Threader.hpp"
 
 NetworkLayer::NetworkLayer(size_t numNodes, size_t numInputs, double bias)
 {
@@ -44,14 +45,43 @@ void NetworkLayer::GetNodeBias(int nodeIx, double &bias)
     bias = m_nodes[nodeIx].GetBias();
 }
 
+//#define TEST_WITH_THREADS
+#ifndef TEST_WITH_THREADS
 void NetworkLayer::Measure(const std::vector<double> &outputs)
 {
+    StartTimer();
     for(size_t i=0; i<m_nodes.size(); i++)
     {
         m_outputs[i] = m_nodes[i].Measure(outputs);
+    }
+
+    for(size_t i=0; i<m_nodes.size(); i++)
+    {
         m_outputDerivatives[i] = m_nodes[i].GetOutputDerivative();
     }
+    StopTimer();
 }
+#else
+void NetworkLayer::Measure(const std::vector<double> &outputs)
+{
+    StartTimer();
+    Threader threader(m_nodes.size());
+    for(size_t i=0; i<m_nodes.size(); i++)
+    {
+        auto func = std::bind(static_cast<double(NetworkNode::*)(const std::vector<double> &)>(&NetworkNode::Measure), &m_nodes[i], std::placeholders::_1);
+        threader.start(i, func, outputs);
+        //m_outputs[i] = m_nodes[i].Measure(outputs);
+    }
+    threader.join();
+
+    for(size_t i=0; i<m_nodes.size(); i++)
+    {
+        m_outputs[i] = threader.result(i);
+        m_outputDerivatives[i] = m_nodes[i].GetOutputDerivative();
+    }
+    StopTimer();
+}
+#endif
 
 void NetworkLayer::Measure(std::vector<NetworkNode> &inputNodes)
 {
