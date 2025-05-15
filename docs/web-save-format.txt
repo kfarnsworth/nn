@@ -1,0 +1,32 @@
+FORMAT OF FILES WHEN SAVING FROM BROWSER TO LOCAL DEVICE:
+
+{
+	"network": {
+		"inputs": <int>,
+		"outputs":<int>,
+		"layers":[
+			{
+				"nodes": [
+					{
+						"bias": <float>,
+						"weights": { <float, <float>, …}
+					},
+					…
+				]
+			},
+			…
+		]
+	},
+	"measurement": {
+		"xPixels": <int>,
+		"yPixels": <int>,
+		"continuous": <boolean>
+	},
+	"training": {
+		"type": <string>,
+		"learnRate": <float>,
+		"batchSize": <int>,
+		"batchCount": <int>,
+		"output": <string>
+	}
+}

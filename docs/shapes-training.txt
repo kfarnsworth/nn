@@ -1,0 +1,4 @@
+URL to data for shape training:
+    https://github.com/keyurr2/shape-classifier-cnn.git
+
+

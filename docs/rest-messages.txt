@@ -1,0 +1,287 @@
+RESTful message formats:
+
+MAIN FORM USED FOR AL MESSAGE REQUESTS:
+{
+	"cmd": "<command>"-,
+	"data": {
+	}
+	"response": {
+		"result": <int>,
+		"error" : "<string>",
+		"info": {
+		}
+	}
+}
+
+commands :
+	getStatus
+	getNetwork
+	setNetwork
+	loadNetwork
+	saveNetwork
+	getMeasurement
+	startTraining
+	stopTraining
+	getTrainingState
+	getWeight
+	getBias
+
+============================================================================================================
+
+getStatus Request:
+	{
+		"cmd: "getStatus",
+	}
+getStatus Response:
+	{
+		"cmd": "getStatus",
+		"response": {
+			"result": 0,
+			"error": "",
+			"info": {
+				"networkLoaded": <true/false>,
+				"isTraining": <true/false>,
+				"inputs": [0.0,0.0, … 0.0]
+				"activations": [
+					[x.x, x.x, x.x, …. x.x],
+				],
+				"networkFiles": [
+					"<string>", "<string>", …
+				],
+				"trainingFiles": [
+					"<string>", "<string>", …
+				],
+				"trainingTypes":[
+					"<string>", "<string>", …
+				],
+				"trainingSettings": {
+					"file": "<string>",
+					"type": "<string>",
+					"rate": <double>,
+					"momentum": <double>,
+					"batchSize": <int>,
+					"batchCount": <int>
+				}
+			}
+	}
+	TEST: curl -X POST http://127.0.0.1:4569/nn -d '{ "cmd": "getStatus" }' -H "Content-Type: application/json"
+
+============================================================================================================
+
+getNetwork Request:
+	{
+		"cmd: "getNetwork",
+	}
+getNetwork Response:
+	{
+		"cmd": "getNetwork",
+		"response": {
+			"result": 0,
+			"error": "",
+			''info": {
+				    "inputs": 784,
+				   "outputs": 10,
+				    "layers": [
+				        {
+						"nodes": [
+						{
+							"bias": <float>,
+							"weights": { <float, <float>, …}
+						},
+						…
+						]
+				        },
+					…
+				    ]
+			}
+		}
+	}
+
+	TEST: curl -X POST http://127.0.0.1:4569/nn -d '{ "cmd": "getNetwork" }' -H "Content-Type: application/json"
+
+============================================================================================================
+
+loadNetwork Request:
+	{
+		"cmd: "loadNetwork",
+		"data": {
+			filename: "<srting>"
+		}
+	}
+loadNetwork Response:
+	{
+		"cmd": "loadNetwork",
+		"response": {
+			"result": 0,
+			"error": ""
+		},
+		''info": {
+			    "inputs": 784,
+			   "outputs": 10,
+			    "layers": [
+			        {
+					"nodes": [
+					{
+						"bias": <float>,
+						"weights": { <float, <float>, …}
+					},
+					…
+					]
+			        },
+				…
+			    ]
+		}
+	}
+
+============================================================================================================
+
+saveNetwork Request:
+	{
+		"cmd: "saveNetwork",
+		"data": {
+			filename: "<srting>"
+		}
+	}
+loadNetwork Response:
+	{
+		"cmd": "saveNetwork",
+		"response": {
+			"result": 0,
+			"error": ""
+		}
+	}
+
+============================================================================================================
+
+setNetwork Request:
+	{
+		"cmd": "setNetwork",
+		"data": {
+			    "inputs": 784,
+			   "outputs": 10,
+			    "layers": [
+			        {
+			            "nodes": 32,
+			            "defaultBias": -1
+			        },
+			        {
+			            "nodes": 10,
+			            "defaultBias": -1
+			        }
+			    ]
+		}
+	}
+
+setNetwork Response:
+	{
+		"cmd": "setNetwork",
+		"response": {
+			"result": 0,
+			"error": "",
+	}
+
+TEST: curl -X POST http://127.0.0.1:4569/nn
+   -d '{ "cmd":  "setNetwork",
+           "data": {
+                       "inputs":784,
+                       "outputs":10,
+                        "layers": [
+                                 {"nodes":32,"defaultBias":-1},
+                                 {"nodes":10,"defaultBias":-1} ]
+                         }
+         }'
+   -H "Content-Type: application/json"
+
+============================================================================================================
+
+getMeasurement Request:
+	{
+		"cmd: "getMeasurement",
+		"data":  {
+			"divisor": 255,
+			"input": [0.0.0,0.0,0.0,0.0,…,0.0,0.0]
+		}
+	}
+
+getMeasurement Response:
+	{
+		"cmd: "getMeasurement",
+		"response": {
+			"result": 0,
+			"error": ""
+			"info": {
+				"output": [0.0,0,0,….,0.0,0.0]
+			}
+		}
+    }
+    TEST: curl -X POST http://127.0.0.1:4569/nn   -d @measure-test.json   -H "Content-Type: application/json"
+
+============================================================================================================
+
+startTraining Request:
+	{
+		"cmd: "startTraining",
+		"data":  {
+			"filename": "<string>",
+			"type": "<string>",              (like "SGD")
+			"rate": <double>,
+			"momentum": <double>,
+			"batchSize": <int>,
+			"batchCount": <int>,
+			"outputType": <int>        (-1=All)
+		}
+	}
+
+startTraining Response:
+	{
+		"cmd: "startTraining ",
+		"response": {
+			"result": 0,
+			"error": ""
+		}
+	}
+
+============================================================================================================
+
+stopTraining Request:
+	{
+		"cmd: "stopTraining"
+	}
+
+stopTraining Response:
+	{
+		"cmd: "stopTraining ",
+		"response": {
+			"result": 0,
+			"error": ""
+		}
+	}
+
+============================================================================================================
+
+getTrainingState Request:
+	{
+		"cmd: "getTrainingState "
+	}
+
+getTrainingState Response:
+	{
+		"cmd: "getTrainingState ",
+		"response": {
+			"result": 0,
+			"error": ""
+			''info": {
+				"isTraining": <true/false>,
+				"inputs": [0.0,0.0, … 0.0]
+				"activations": [
+					[x.x, x.x, x.x, …. x.x],
+				],
+				"batchCount": <int>,
+				"batchTotal": <int>,
+				"totalTime": <int>
+			}
+		}
+	}
+
+============================================================================================================
+
