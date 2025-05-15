@@ -2,6 +2,7 @@
 #include <fstream>
 #include <filesystem>
 #include <stb/stb_image.h>
+#include <stb/stb_image_resize.h>
 #include "TrainingData.h"
 #include "json.hpp"
 
@@ -9,6 +10,7 @@ TrainingData::TrainingData()
 {
     setIndex = 0;
     threshold = 1;
+    inverted = false;
 }
 
 TrainingData::~TrainingData()
@@ -147,6 +149,7 @@ bool TrainingData::OpenData(const std::string filename)
             size_t cols = input_params["height"];
             inputCount = rows * cols;
             threshold = input_params["threshold"];
+            inverted = input_params["inverted"];
         }
         else if (inputType == "decimal")
         {
@@ -236,6 +239,7 @@ bool TrainingData::ParseDataInput(std::string inputStr, std::vector<double> &inp
         if (!dirPrefix.empty())
             inputStr = dirPrefix + "/" + inputStr;
         int x,y,comp;
+        //stbi_set_flip_vertically_on_load(true);
         uint8_t* img = stbi_load(inputStr.c_str(), &x, &y, &comp, 0);
         if (img == NULL)
         {
@@ -244,19 +248,40 @@ bool TrainingData::ParseDataInput(std::string inputStr, std::vector<double> &inp
         }
         if ((x * y) != (int)inputCount)
         {
-            std::cerr << "Input data set entry not correct size: '" << inputStr << "'" << std::endl;
-            return false;
+            int sqrSize = (int)sqrt(inputCount);
+            int newX = sqrSize;
+            int newY = sqrSize;
+            int pixSize = sqrSize*sqrSize;
+            if (pixSize > (int)inputCount) {
+                newY += inputCount - pixSize;
+            }
+            uint8_t *imgScaled = (uint8_t *)malloc(newX * newY * comp);
+            if (imgScaled == NULL || !stbir_resize_uint8(img, x, y, 0, imgScaled, newX, newY, 0, comp))
+            {
+                std::cerr << "Unable to rescale image file: '" << inputStr << "'" << std::endl;
+                stbi_image_free(img);
+                if (imgScaled) stbi_image_free(imgScaled);
+                return false;
+            }
+            uint8_t * oldImg = img;
+            img = imgScaled;
+            stbi_image_free(oldImg);
+            x = newX;
+            y = newY;
         }
         for (int i=0; i<x; i++)
         {
             for (int j=0; j<y; j++)
             {
                 uint8_t v = *(img + (i*x) + j);
+                if (inverted)
+                    v = 255 - v;
                 if (v < threshold)
                     v = 0;
                 input.push_back((v * 1.0) / 255);
             }
         }
+        stbi_image_free(img);
         return true;
     }
     if (inputType == "decimal")
@@ -267,6 +292,8 @@ bool TrainingData::ParseDataInput(std::string inputStr, std::vector<double> &inp
             size_t pos2 = inputStr.find(' ', pos1);
             std::string s = inputStr.substr(pos1, pos2-pos1);
             uint8_t v = static_cast<uint8_t>(atol(s.c_str()));
+            if (inverted)
+                v = 255 - v;
             if (v < threshold)
                 v = 0;
             input.push_back((v * 1.0) / 255);
@@ -286,6 +313,8 @@ bool TrainingData::ParseDataInput(std::vector<unsigned char> inputBytes, std::ve
     {
         for (unsigned char v : inputBytes)
         {
+            if (inverted)
+                v = 255 - v;
             if (v < threshold)
                 v = 0;
             input.push_back((v * 1.0) / 255);
@@ -338,4 +367,13 @@ void TrainingData::TrainingDataFiles(std::vector<std::string> &list, const std::
             list.push_back(file.path().filename());
         }
     }
+}
+
+std::vector<std::string> TrainingData::GetOutputParamsSet()
+{
+    std::vector<std::string> paramsSet;
+    for (auto &entry : outputSet) {
+        paramsSet.push_back(entry);
+    }
+    return paramsSet;
 }

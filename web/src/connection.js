@@ -4,7 +4,7 @@
 
 var hostIsConnected = false;
 var hostNetworkLoaded = false;
-var hostUrl = "/nn/";
+var hostUrl = "/nn";
 
 function connection_connect(func)
 {
@@ -110,7 +110,7 @@ function connection_start_training_response(response, func)
     {
         console.log("startTraining error: " + response.error);
     }
-    func(response.result == 0);
+    func(response.result == 0, response.info);
 }
 
 function connection_start_training(data, func)

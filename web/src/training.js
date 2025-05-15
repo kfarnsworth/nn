@@ -28,8 +28,9 @@ function training_toggle()
             "batchCount": batchCount,
             "outputType": outputType
         }
-        connection_start_training(obj, function(status) {
+        connection_start_training(obj, function(status, info) {
             if (status) {
+                draw_output_value_set(info.set);
                 training_update_display(true);
                 setTimeout(training_update_state, 100);
             }

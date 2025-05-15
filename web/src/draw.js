@@ -11,6 +11,8 @@ const SCALE_ZOOM_INC = 0.1;
 const SCALE_ZOOM_MIN = 0.5;
 const SCALE_ZOOM_MAX = 4.0;
 
+const DRAW_CANVAS_WIDTH = 9.0;
+const DRAW_CANVAS_HEIGHT = 6.0;
 const DRAW_LEFT_MARGIN = 0.5;
 const DRAW_TOP_MARGIN = 0.5;
 const DRAW_ROW_PACING = 0.3;
@@ -22,6 +24,7 @@ const DRAW_INPUT_BOX_SIZE = 0.2;
 const DRAW_NODE_CIRCLE_SIZE = 0.2;
 const DRAW_OUTPUT_BOX_SIZE = 0.2;
 const DRAW_DOT_SIZE = 0.1;
+const DRAW_OUTPUT_LABEL_MAX_WIDTH = 3.0;
 
 var draw_info = {
     index: 0,
@@ -100,24 +103,14 @@ function draw_zoom_scale()
     return zoom * zoom_scale;
 }
 
-function draw_page_width()
-{
-    return 7.5;
-}
-
-function draw_page_height()
-{
-    return 6.0;
-}
-
 function draw_canvas_width()
 {
-    return Math.ceil(draw_page_width() * PIXELS_PERINCH * zoom);
+    return Math.ceil(DRAW_CANVAS_WIDTH * PIXELS_PERINCH * zoom);
 }
 
 function draw_canvas_height()
 {
-    return Math.ceil(draw_page_height() * PIXELS_PERINCH * zoom);
+    return Math.ceil(DRAW_CANVAS_HEIGHT * PIXELS_PERINCH * zoom);
 }
 
 function draw_input_box(ctx, xPos, yPos, num)
@@ -252,6 +245,47 @@ function draw_output_box(ctx, xPos, yPos, num)
                     yPos + 0.1, xPos, yPos + 0.1);
 }
 
+function draw_output_value_set(set)
+{
+    var xPos = DRAW_LEFT_MARGIN + (DRAW_COLUMN_PACING * (network_get_layers() + 1)) + 3 * DRAW_OUTPUT_BOX_SIZE + 0.1;
+    var yPos = DRAW_TOP_MARGIN;
+    var lastOutputIndex = DRAW_MAX_PER_COLUMN;
+    if (network_get_outputs() > DRAW_MAX_PER_COLUMN)
+        lastOutputIndex = DRAW_START_COUNT;
+    for (var i=0; i<network_get_outputs(); i++)
+    {
+        if (i >= lastOutputIndex)
+            break;
+        var ctx = canvasChild.getContext('2d');
+        var zoom_draw = draw_zoom_scale();
+        var xPosPixels = draw_inches_to_pixels(xPos);
+        var yPosPixels = draw_inches_to_pixels(yPos);
+        var xPoint = Math.ceil(xPosPixels * zoom_draw);
+        var yPoint = Math.ceil(yPosPixels * zoom_draw);
+        var hPixels = draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE * zoom_draw);
+        var wPixels = draw_inches_to_pixels(DRAW_OUTPUT_LABEL_MAX_WIDTH * zoom_draw);
+
+        // clear area
+        ctx.beginPath();
+        ctx.strokeStyle = 'hsl(0, 0%, 92%)';
+        ctx.rect(xPoint, yPoint, wPixels, hPixels);
+        ctx.stroke();
+        ctx.fillStyle = 'hsl(0, 0%, 92%)';
+        ctx.fill();
+
+        let str = '"' + set[i] + '"';
+        let metrics = ctx.measureText(str);
+        let textHeight = Math.ceil(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+        yPoint += draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE); // bottom left corner for fillText
+        yPoint -= (draw_inches_to_pixels(DRAW_OUTPUT_BOX_SIZE) - textHeight) / 2; // center against box
+        ctx.font = 400 + " " + 12 + "pt " + "Times New Roman";
+        ctx.fillStyle = "black";
+        ctx.strokeStyle = "black";
+        ctx.fillText(str, xPoint, yPoint);
+        yPos += DRAW_ROW_PACING;
+    }
+}
+
 function draw_redraw()
 {
     var area = document.getElementById("canvasesdiv");
@@ -265,7 +299,6 @@ function draw_redraw()
     canvasChild = canvas;
     var xPos = DRAW_LEFT_MARGIN;
     var yPos = DRAW_TOP_MARGIN;
-    var zoom_draw = draw_zoom_scale();
 
     canvas.width = draw_canvas_width();
     canvas.height = draw_canvas_height();
@@ -356,6 +389,14 @@ function draw_redraw()
             draw_output_box(ctx, xPos, yPos, i);
             yPos += DRAW_ROW_PACING;
         }
+    }
+
+    area.onmousemove = function(e) {
+        var rect = this.getBoundingClientRect();
+        var x = e.clientX - rect.left;
+        var y = e.clientY - rect.top;
+        // check if hover over node
+        var firstXnode = network_get_layers()
     }
 }
 

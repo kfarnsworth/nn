@@ -33,7 +33,6 @@ int main(int argc, char *argv[])
         }
         std::cout << std::endl;
     }
-    free(img);
+    stbi_image_free(img);
     return 0;
 }
-

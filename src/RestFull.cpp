@@ -333,7 +333,6 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
         }
         m_network.Measure(inputVector);
         std::vector<double> outputVector = m_network.GetOutputs();
-        nlohmann::json output;
         info["output"] = outputVector;
         errStr = "ok";
         return 0;
@@ -417,7 +416,8 @@ int RestFull::CommandInterpreter(const std::string &cmd, std::string &errStr,
         m_trainer->SetLearningRate(rate);
         m_trainer->SetMomentum(momentum);
         m_trainer->Train(m_trainingData, batchSize, batchCount, outputType);
-        errStr = "traning started";
+        info["set"] = m_trainingData.GetOutputParamsSet();
+        errStr = "training started";
         return 0;
     }
     if (!cmd.compare("stopTraining"))

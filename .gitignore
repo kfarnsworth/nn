@@ -1,1 +1,5 @@
 bin/*
+training/shapes/circle*
+training/shapes/star*
+training/shapes/square*
+training/shapes/triangle*
